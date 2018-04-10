@@ -1,0 +1,122 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.insight.jgit";
+option java_outer_classname = "DGit";
+
+package proto;
+
+service RepoManager {
+    rpc loadConfig (RepoName) returns (RepoConfig) {
+    }
+    rpc saveConfig (RepoConfig) returns (Empty) {
+    }
+    rpc createRepo (RepoName) returns (Empty) {
+    }
+    rpc openRepo (RepoName) returns (RepoReply) {
+    }
+    rpc deleteRepo (RepoName) returns (RepoReply) {
+    }
+}
+
+message RepoReply {
+    bool repoExists = 1;
+}
+
+message Empty {
+}
+message RepoName {
+    string name = 1;
+}
+message RepoConfig {
+    string repoName = 1;
+    string config = 2;
+}
+
+message LoadConfigReply {
+    string config = 1;
+}
+message SaveConfigReply {
+}
+
+service RefService {
+    rpc all (Empty) returns (RefList) {
+    }
+    rpc compareAndPut (RefUpdateRequest) returns (RefUpdateResult) {
+    }
+    rpc compareAndRemove (RefRemoveRequest) returns (RefUpdateResult) {
+    }
+}
+
+message ObjectId {
+    string id = 1;
+}
+message Ref {
+    string name = 1;
+    bool symbolic = 2;
+    ObjectId objectId = 3;
+    Storage storage = 4;
+    string target = 5;
+}
+enum Storage {
+    NEW = 0;
+    LOOSE = 1;
+    PACKED = 2;
+    LOOSE_PACKED = 3;
+    NETWORK = 4;
+}
+message RefList {
+    repeated Ref refs = 1;
+}
+message RefUpdateRequest {
+    Ref oldRef = 1;
+    Ref newRef = 2;
+}
+message RefRemoveRequest {
+    Ref oldRef = 1;
+}
+message RefUpdateResult {
+    bool result = 1;
+}
+
+service ObjectService {
+    rpc resolve (ResolveRequest) returns (ObjectIdList) {
+    };
+    rpc shallowCommits (Empty) returns (ObjectIdList) {
+    };
+    rpc insert (stream ObjectInsertRequest) returns (ObjectId) {
+    };
+}
+message ResolveRequest {
+    ObjectId abbreviatedObjectId = 1;
+}
+message ObjectIdList {
+    repeated ObjectId objectIds = 1;
+}
+message ObjectInsertRequest {
+    int32 objectType = 1;
+    int64 totalLength = 2;
+    bytes data = 3;
+    int64 pos = 4;
+}
+
+service PackService {
+    rpc onStoreStream (Buffer) returns (Empty) {
+    };
+    rpc onObjectHeader (BufferWithSource) returns (Empty) {
+    };
+    rpc onObjectData (BufferWithSource) returns (Empty) {
+    };
+
+}
+message Buffer {
+    bytes data = 1;
+}
+enum Source {
+    INPUT = 0;
+    DATABASE = 1;
+}
+message BufferWithSource {
+    Source src = 1;
+    bytes data = 2;
+}
