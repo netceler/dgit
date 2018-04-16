@@ -18,10 +18,14 @@ public class GrpcServer {
     RepoNameServerInterceptor interceptor=new RepoNameServerInterceptor(repoManager);
     GrpcRefService grpcRefService = new GrpcRefService();
     GrpcObjectService grpcObjectService = new GrpcObjectService();
+    GrpcRepoManager grpcRepoManager = new GrpcRepoManager(repoManager);
+
     server = ServerBuilder.forPort(port)
+        .addService(grpcRepoManager)
         .addService(ServerInterceptors.intercept(grpcRefService, interceptor))
         .addService(ServerInterceptors.intercept(grpcObjectService, interceptor))
         .build();
+    
   }
   public void start() throws IOException {
     server.start();

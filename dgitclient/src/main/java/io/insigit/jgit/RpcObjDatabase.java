@@ -37,7 +37,7 @@ public class RpcObjDatabase extends DfsObjDatabase {
 
   @Override
   public ObjectInserter newInserter() {
-    return new RpcObjectInserter(this);
+    return getObjectService().newInserter(this);
   }
 
   @Override

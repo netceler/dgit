@@ -4,6 +4,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalNotification;
+import io.insigit.jgit.services.RepoManager;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
@@ -14,7 +15,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
-public class LocalDiskRepoManager {
+public class LocalDiskRepoManager implements RepoManager{
 
   private final File baseDir;
 
@@ -39,7 +40,7 @@ public class LocalDiskRepoManager {
     note.getValue().close();
   }
 
-  public FileRepository openRepo(String name) {
+  public FileRepository open(String name) {
     try {
       return repoCache.get(name);
     } catch (ExecutionException e) {
@@ -47,13 +48,7 @@ public class LocalDiskRepoManager {
     }
   }
 
-  public boolean removeRepo(String name) {
-    repoCache.invalidate(name);
-    File repoDir = new File(baseDir, name);
-    return repoDir.delete();
-  }
-
-  public FileRepository createRepo(String name) {
+  public FileRepository create(String name) {
     if (!exists(name)) {
       File repoDir = new File(baseDir, name);
       Git git;
@@ -64,12 +59,17 @@ public class LocalDiskRepoManager {
       }
       FileRepository repository = (FileRepository) git.getRepository();
       repoCache.put(name, repository);
-      Collection<PackFile> packs = repository.getObjectDatabase().getPacks();
-
       return repository;
     } else {
-      return openRepo(name);
+      return open(name);
     }
+  }
+
+  @Override
+  public void delete(String name) {
+    repoCache.invalidate(name);
+    File repoDir = new File(baseDir, name);
+    repoDir.delete();
   }
 
   public boolean exists(String name) {

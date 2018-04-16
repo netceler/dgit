@@ -1,7 +1,9 @@
 package io.insight.jgit.server.services;
 
+import io.insigit.jgit.RpcObjDatabase;
 import io.insigit.jgit.services.RpcObjectService;
 import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.transport.PackParser;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,7 +37,17 @@ public class ObjectServiceImpl implements RpcObjectService {
   }
 
   @Override
-  public ObjectId insert(int objectType, long length, InputStream in) throws IOException {
+  public ObjectId insert(int inserterId, int objectType, long length, InputStream in) throws IOException {
     return repo.getObjectDatabase().newInserter().insert(objectType, length, in);
+  }
+
+  @Override
+  public PackParser newPackParser(RpcObjDatabase odb, InputStream in) throws IOException {
+    return repo.getObjectDatabase().newInserter().newPackParser(in);
+  }
+
+  @Override
+  public ObjectInserter newInserter(RpcObjDatabase odb) {
+    return repo.newObjectInserter();
   }
 }

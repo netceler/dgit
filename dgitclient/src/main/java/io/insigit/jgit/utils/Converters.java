@@ -1,10 +1,7 @@
 package io.insigit.jgit.utils;
 
 import io.insight.jgit.Storage;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectIdRef;
-import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.SymbolicRef;
+import org.eclipse.jgit.lib.*;
 
 import java.util.Collections;
 import java.util.Map;
@@ -43,5 +40,13 @@ public class Converters {
           .setObjectId(io.insight.jgit.ObjectId.newBuilder().setId(ref.getObjectId().getName()).build())
           .build();
     }
+  }
+
+  public static ObjectId fromObjId(io.insight.jgit.ObjectId objId){
+    return ObjectId.fromString(objId.getId());
+  }
+
+  public static io.insight.jgit.ObjectId toObjId(AnyObjectId id) {
+    return io.insight.jgit.ObjectId.newBuilder().setId(id.name()).build();
   }
 }

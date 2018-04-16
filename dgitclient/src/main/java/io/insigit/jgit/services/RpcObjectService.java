@@ -1,10 +1,9 @@
 package io.insigit.jgit.services;
 
 
-import org.eclipse.jgit.lib.AbbreviatedObjectId;
-import org.eclipse.jgit.lib.AnyObjectId;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectLoader;
+import io.insigit.jgit.RpcObjDatabase;
+import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.transport.PackParser;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,5 +17,9 @@ public interface RpcObjectService {
 
   ObjectLoader open(AnyObjectId objectId, int typeHint) throws IOException;
 
-  ObjectId insert(int objectType, long length, InputStream in) throws IOException;
+  ObjectId insert(int inserterId,int objectType, long length, InputStream in) throws IOException;
+
+  PackParser newPackParser(RpcObjDatabase odb, InputStream in) throws IOException;
+
+  ObjectInserter newInserter(RpcObjDatabase odb);
 }

@@ -15,10 +15,10 @@ public class RpcRepository extends DfsRepository {
   private RpcObjectService objectService;
   private RepoService repoService;
 
-  protected RpcRepository(DfsRepositoryBuilder builder,
-                          RepoService repoService,
-                          RpcRefService refService,
-                          RpcObjectService objectService) {
+  public RpcRepository(DfsRepositoryBuilder builder,
+                       RepoService repoService,
+                       RpcRefService refService,
+                       RpcObjectService objectService) {
     super(builder);
     this.refService = refService;
     this.objectService = objectService;

@@ -17,7 +17,7 @@ public class RepoNameServerInterceptor implements ServerInterceptor {
   public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> serverCall, Metadata metadata, ServerCallHandler<ReqT, RespT> serverCallHandler) {
     String repoName = metadata.get(Constants.REPO_NAME_METADATA_KEY);
     
-    Context ctx = Context.current().withValue(REPO_CTX_KEY, repoManager.openRepo(repoName));
+    Context ctx = Context.current().withValue(REPO_CTX_KEY, repoManager.open(repoName));
     return Contexts.interceptCall(ctx, serverCall, metadata, serverCallHandler);
   }
 }

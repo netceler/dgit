@@ -84,8 +84,13 @@ service ObjectService {
     };
     rpc shallowCommits (Empty) returns (ObjectIdList) {
     };
+    rpc open (OpenRequest) returns (stream OpenReply) {}
+    rpc newInserter (Empty) returns (Inserter) {}
+    rpc flushInserter (Inserter) returns (Empty) {}
+    rpc closeInserter (Inserter) returns (Empty) {}
     rpc insert (stream ObjectInsertRequest) returns (ObjectId) {
     };
+    rpc newParser (stream PackParserRequest) returns (Empty) {}
 }
 message ResolveRequest {
     ObjectId abbreviatedObjectId = 1;
@@ -93,30 +98,26 @@ message ResolveRequest {
 message ObjectIdList {
     repeated ObjectId objectIds = 1;
 }
+message Inserter {
+    int32 id = 1;
+}
 message ObjectInsertRequest {
-    int32 objectType = 1;
-    int64 totalLength = 2;
-    bytes data = 3;
-    int64 pos = 4;
+    Inserter inserter = 1;
+    int32 objectType = 2;
+    int64 totalLength = 3;
+    bytes data = 4;
 }
-
-service PackService {
-    rpc onStoreStream (Buffer) returns (Empty) {
-    };
-    rpc onObjectHeader (BufferWithSource) returns (Empty) {
-    };
-    rpc onObjectData (BufferWithSource) returns (Empty) {
-    };
-
+message OpenRequest {
+    ObjectId objectId = 1;
+    int32 objectHint = 2;
 }
-message Buffer {
-    bytes data = 1;
+message OpenReply {
+    bool isLarge =1;
+    int64 size =2;
+    int32 type = 3;
+    bytes data = 4;
 }
-enum Source {
-    INPUT = 0;
-    DATABASE = 1;
-}
-message BufferWithSource {
-    Source src = 1;
+message PackParserRequest {
+    Inserter inserter = 1;
     bytes data = 2;
 }

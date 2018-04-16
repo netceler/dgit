@@ -12,22 +12,25 @@ import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
-public class FileCachedByteBuffer  {
+public class FileCachedByteBuffer {
 
   public static int MEM_CACHE_THRESHOLD = 512 * 1024;
+  public static int MAX_SIZE = 1024 * 1024 * 1024;
 
   public static ClosableByteBuf createBuffer(int length) throws IOException {
 
-    if (length <= MEM_CACHE_THRESHOLD){
-      return new ClosableByteBuf(Unpooled.buffer(length)){
+    if (length <= MEM_CACHE_THRESHOLD) {
+      return new ClosableByteBuf(Unpooled.buffer(length)) {
         @Override
-        public void close() throws Exception { }
+        public void close() throws Exception {
+        }
       };
     } else {
       final File tempFile = File.createTempFile("cache_file", null);
       RandomAccessFile raf = new RandomAccessFile(tempFile, "rw");
       MappedByteBuffer bb = raf.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, length);
       ByteBuf buf = Unpooled.wrappedBuffer(bb);
+      buf.setIndex(0, 0);
       return new ClosableByteBuf(buf) {
         @Override
         public void close() throws Exception {
@@ -36,6 +39,10 @@ public class FileCachedByteBuffer  {
         }
       };
     }
+  }
+
+  public static ClosableByteBuf createBuffer() throws IOException {
+    return createBuffer(MAX_SIZE);
   }
 
   public static abstract class ClosableByteBuf extends SlicedByteBuf implements AutoCloseable {
