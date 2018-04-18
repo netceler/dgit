@@ -3,6 +3,8 @@ package io.insight.jgit.server.services;
 import io.insight.jgit.Inserter;
 import io.insigit.jgit.RpcObjDatabase;
 import io.insigit.jgit.services.RpcObjectService;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
+import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.transport.PackParser;
 
@@ -33,7 +35,7 @@ public class ObjectServiceImpl implements RpcObjectService<Inserter> {
   }
 
   @Override
-  public ObjectLoader open(AnyObjectId objectId, int typeHint) throws IOException {
+  public ObjectLoader open(AnyObjectId objectId, int typeHint) throws MissingObjectException, IncorrectObjectTypeException,IOException {
     return repo.getObjectDatabase().open(objectId, typeHint);
   }
 

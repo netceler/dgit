@@ -1,5 +1,6 @@
 package io.insight.jgit.server.grpc;
 
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import io.insight.jgit.*;
 import org.eclipse.jgit.errors.ConfigInvalidException;
@@ -61,11 +62,12 @@ public class GrpcRepoManager extends RepoManagerGrpc.RepoManagerImplBase {
     if (exists) {
       try {
         localRepoManager.delete(request.getName());
-        responseObserver.onNext(RepoReply.newBuilder().setRepoExists(exists).build());
-        responseObserver.onCompleted();
       } catch (IOException e) {
-        responseObserver.onError(e);
+        responseObserver.onError(Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException());
+        return;
       }
     }
+    responseObserver.onNext(RepoReply.newBuilder().setRepoExists(exists).build());
+    responseObserver.onCompleted();
   }
 }

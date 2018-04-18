@@ -15,6 +15,8 @@ public class RpcRepository extends DfsRepository {
   private RpcRefService refService;
   private RpcObjectService objectService;
   private RepoService repoService;
+  public RpcRefDatabase rpcRefDatabase;
+  public RpcObjDatabase rpcObjDatabase;
 
   public RpcRepository(DfsRepositoryBuilder builder,
                        RepoService repoService,
@@ -33,12 +35,18 @@ public class RpcRepository extends DfsRepository {
 
   @Override
   public DfsObjDatabase getObjectDatabase() {
-    return new RpcObjDatabase(this);
+    if(rpcObjDatabase==null) {
+      rpcObjDatabase = new RpcObjDatabase(this);
+    }
+    return rpcObjDatabase;
   }
 
   @Override
   public RefDatabase getRefDatabase() {
-    return new RpcRefDatabase(this);
+    if(rpcRefDatabase ==null) {
+      rpcRefDatabase = new RpcRefDatabase(this);
+    }
+    return rpcRefDatabase;
   }
 
   @Override

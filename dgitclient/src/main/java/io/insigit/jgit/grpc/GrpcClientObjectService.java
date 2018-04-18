@@ -1,13 +1,18 @@
 package io.insigit.jgit.grpc;
 
 import com.google.protobuf.ByteString;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import io.insight.jgit.*;
 import io.insigit.jgit.RpcObjDatabase;
 import io.insigit.jgit.services.RpcObjectService;
 import io.insigit.jgit.utils.Converters;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
+import org.eclipse.jgit.internal.JGitText;
 import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.transport.PackParser;
 
@@ -22,6 +27,7 @@ import java.util.concurrent.ExecutionException;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+import static org.eclipse.jgit.lib.ObjectReader.OBJ_ANY;
 
 public class GrpcClientObjectService implements RpcObjectService<Inserter> {
 
@@ -53,27 +59,24 @@ public class GrpcClientObjectService implements RpcObjectService<Inserter> {
     OpenRequest request = OpenRequest.newBuilder()
         .setObjectHint(typeHint)
         .setObjectId(Converters.toObjId(objectId)).build();
-    ArrayBlockingQueue<OpenReply> queue=new ArrayBlockingQueue<>(1);
-    asyncStub.open(request, new StreamObserver<OpenReply>() {
-      @Override
-      public void onNext(OpenReply openReply) {
-        queue.add(openReply);
-      }
-
-      @Override
-      public void onError(Throwable throwable) {
-        throwable.printStackTrace();
-      }
-
-      @Override
-      public void onCompleted() {
-        queue.add(null);
-      }
-    });
+    Iterator<OpenReply> iterator = stub.open(request);
     try {
-      return new GrpcClientObjectLoader(queue);
-    } catch (InterruptedException e) {
-      throw new IOException(e);
+      return new GrpcClientObjectLoader(iterator);
+    } catch (StatusRuntimeException e) {
+      String type;
+      if (typeHint == OBJ_ANY) {
+        type = JGitText.get().unknownObjectType2;
+      } else {
+        type = Constants.typeString(typeHint);
+      }
+      switch (e.getStatus().getCode()) {
+        case NOT_FOUND:
+          throw new MissingObjectException(objectId.copy(), type);
+        case INVALID_ARGUMENT:
+          throw new IncorrectObjectTypeException(objectId.copy(), type);
+        default:
+          throw new IOException(e.getMessage(), e);
+      }
     }
   }
 

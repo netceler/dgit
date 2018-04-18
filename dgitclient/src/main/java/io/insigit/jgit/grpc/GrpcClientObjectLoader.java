@@ -10,15 +10,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
-import java.util.concurrent.BlockingQueue;
 
 public class GrpcClientObjectLoader extends ObjectLoader {
   private final OpenReply first;
-  private final BlockingQueue<OpenReply> iterator;
+  private final Iterator<OpenReply> iterator;
 
-  public GrpcClientObjectLoader(BlockingQueue<OpenReply> queue) throws InterruptedException {
-    first = queue.take();
-    this.iterator = queue;
+  public GrpcClientObjectLoader(Iterator<OpenReply> iterator) {
+    first = iterator.next();
+    this.iterator = iterator;
   }
 
   @Override
@@ -76,9 +75,8 @@ public class GrpcClientObjectLoader extends ObjectLoader {
           public int read() throws IOException {
             int read = curr.read();
             if (read == -1) {
-              OpenReply reply = iterator.poll();
-              if (reply!=null) {
-                curr = reply.getData().newInput();
+              if (iterator.hasNext()) {
+                curr = iterator.next().getData().newInput();
                 return curr.read();
               } else {
                 return -1;

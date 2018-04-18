@@ -14,6 +14,7 @@ import org.eclipse.jgit.transport.PackedObjectInfo;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public class GrpcPackParser extends PackParser {
   private Inserter inserter;
@@ -43,6 +44,11 @@ public class GrpcPackParser extends PackParser {
       observer.onCompleted();
     } catch (IOException e) {
       observer.onError(e);
+    }
+    try {
+      serverFuture.get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException(e);
     }
     return null;
   }

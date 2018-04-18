@@ -125,3 +125,32 @@ message PackParserRequest {
     Inserter inserter = 1;
     bytes data = 2;
 }
+
+service RemoteStream {
+    rpc inputStream (stream StreamRequest) returns (stream StreamReply) {}
+}
+message StreamRequest {
+    message DataChunk {
+        bytes data = 1;
+        int64 ret = 2;
+    }
+    message InitStream {
+        bool markSupport = 1;
+    }
+    oneof request {
+        InitStream init = 1;
+        DataChunk dataChunk = 2;
+    }
+}
+enum StreamCmd {
+    INIT = 0;
+    READ = 1;
+    SKIP = 2;
+    MARK = 3;
+    RESET = 4;
+    AVAIL = 5;
+}
+message StreamReply {
+    StreamCmd cmd = 2;
+    int64 arg = 3;
+}

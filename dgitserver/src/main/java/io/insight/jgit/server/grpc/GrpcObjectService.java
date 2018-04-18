@@ -1,18 +1,22 @@
 package io.insight.jgit.server.grpc;
 
 import com.google.protobuf.ByteString;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import io.insight.jgit.*;
 import io.insight.jgit.server.services.ObjectServiceImpl;
 import io.insight.jgit.server.utils.ByteBufferBackedInputStream;
 import io.insight.jgit.server.utils.FileCachedByteBuffer;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
+import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.transport.PackParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,6 +28,7 @@ import static io.insigit.jgit.grpc.GrpcClientObjectService.BUFFER_SIZE;
 public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
   private AtomicInteger inserterIdSeq = new AtomicInteger(0);
   private ConcurrentHashMap<Integer, ObjectInserter> inserters = new ConcurrentHashMap<>();
+  private static final Logger logger = LoggerFactory.getLogger(GrpcObjectService.class);
 
   private ObjectServiceImpl getImpl() {
     Repository repo = REPO_CTX_KEY.get();
@@ -34,6 +39,8 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
   public void resolve(ResolveRequest request, StreamObserver<ObjectIdList> responseObserver) {
     ObjectServiceImpl impl = getImpl();
     Collection<ObjectId> result = impl.resolve(AbbreviatedObjectId.fromString(request.getAbbreviatedObjectId().getId()));
+    if (logger.isDebugEnabled())
+      logger.debug("resolve {} -> {}", request.toString(), result);
     ObjectIdList.Builder builder = toObjectIdList(result);
     responseObserver.onNext(builder.build());
     responseObserver.onCompleted();
@@ -51,6 +58,8 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
   public void shallowCommits(Empty request, StreamObserver<ObjectIdList> responseObserver) {
     ObjectServiceImpl impl = getImpl();
     Set<ObjectId> result = impl.getShallowCommits();
+    if (logger.isDebugEnabled())
+      logger.debug("shallowCommits {} -> {}", request.toString(), result);
     responseObserver.onNext(toObjectIdList(result).build());
     responseObserver.onCompleted();
   }
@@ -79,9 +88,28 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
             .setData(ByteString.copyFrom(ldr.getCachedBytes()))
             .build());
       }
+      if (logger.isDebugEnabled())
+        logger.debug("open {} -> {}", request.toString(), builder.toString());
       responseObserver.onCompleted();
+    } catch (MissingObjectException e){
+      responseObserver.onError(Status.NOT_FOUND
+          .withDescription(e.getMessage())
+          .withCause(e.getCause())
+          .augmentDescription(e.getObjectId().name())
+          .asRuntimeException()
+      );
+    } catch (IncorrectObjectTypeException e) {
+      responseObserver.onError(Status.INVALID_ARGUMENT
+          .withDescription(e.getMessage())
+          .withCause(e.getCause())
+          .asRuntimeException()
+      );
     } catch (IOException e) {
-      responseObserver.onError(e);
+      responseObserver.onError(Status.INTERNAL
+          .withDescription(e.getMessage())
+          .withCause(e.getCause())
+          .asRuntimeException()
+      );
     }
   }
 
@@ -91,6 +119,8 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
     ObjectId objectId = ObjectId.fromString(request.getObjectId().getId());
     try {
       boolean result = impl.has(objectId, request.getObjectHint());
+      if (logger.isDebugEnabled())
+        logger.debug("has {} -> {}", request.toString(), result);
       responseObserver.onNext(HasReply.newBuilder().setHas(result).build());
       responseObserver.onCompleted();
     } catch (IOException e) {
@@ -136,6 +166,8 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
             ObjectInserter inserter = inserters.get(inserterId);
             if (inserter != null) {
               ObjectId result = inserter.insert(objectType, length, in);
+              if (logger.isDebugEnabled())
+                logger.debug("inserter:{} insert object type:{} len:{} -> {}",inserterId, objectType, length, result);
               responseObserver.onNext(io.insight.jgit.ObjectId.newBuilder().setId(
                   result.getName()).build());
             } else {
@@ -163,8 +195,11 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
     ObjectInserter inserter = impl.newInserter(null);
     int insertId = inserterIdSeq.getAndIncrement();
     inserters.put(insertId, inserter);
+    if (logger.isDebugEnabled())
+      logger.debug("new inserter id:{}", insertId);
     responseObserver.onNext(Inserter.newBuilder().setId(insertId).build());
     responseObserver.onCompleted();
+
   }
 
   @Override
@@ -174,6 +209,8 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
     if (inserter != null) {
       try {
         inserter.flush();
+        if (logger.isDebugEnabled())
+          logger.debug("flush inserter id:{}", id);
         responseObserver.onNext(Empty.getDefaultInstance());
         responseObserver.onCompleted();
       } catch (IOException e) {
@@ -191,6 +228,8 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
     if (inserter != null) {
       inserter.close();
       inserters.remove(id);
+      if (logger.isDebugEnabled())
+        logger.debug("close inserter id:{}", id);
       responseObserver.onNext(Empty.getDefaultInstance());
       responseObserver.onCompleted();
     } else {
@@ -201,19 +240,23 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
   @Override
   public StreamObserver<PackParserRequest> newParser(StreamObserver<Empty> responseObserver) {
     return new StreamObserver<PackParserRequest>() {
+      public int inserterId;
       ObjectInserter inserter;
       FileCachedByteBuffer.ClosableByteBuf buf;
 
       @Override
       public void onNext(PackParserRequest req) {
         try {
-          int id = req.getInserter().getId();
-          inserter = inserters.get(id);
+          inserterId = req.getInserter().getId();
+          inserter = inserters.get(inserterId);
           if (inserter == null) {
-            responseObserver.onError(new Exception("inserter not found: " + id));
+            responseObserver.onError(
+                Status.INTERNAL.withDescription("inserter not found: " + inserterId).asRuntimeException());
           } else {
             if (buf == null) {
               buf = FileCachedByteBuffer.createBuffer();
+              if (logger.isDebugEnabled())
+                logger.debug("inserter:{} newParser", inserterId);
             }
             buf.readFrom(req.getData());
           }
@@ -235,6 +278,8 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
           parser.parse(NullProgressMonitor.INSTANCE);
           responseObserver.onNext(Empty.getDefaultInstance());
           responseObserver.onCompleted();
+          if (logger.isDebugEnabled())
+            logger.debug("inserter:{} parse done.", inserterId);
         } catch (IOException e) {
           responseObserver.onError(e);
         } finally {
