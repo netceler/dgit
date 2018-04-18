@@ -1,12 +1,12 @@
 package io.insight.jgit.server.services;
 
 import io.insigit.jgit.services.RpcRefService;
-import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.RefUpdate;
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.*;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 public class RefServiceImpl implements RpcRefService {
 
@@ -18,7 +18,14 @@ public class RefServiceImpl implements RpcRefService {
 
   @Override
   public Collection<Ref> getAll() {
-    return repo.getAllRefs().values();
+    Map<String, Ref> allRefs = repo.getAllRefs();
+    if (allRefs.isEmpty()) {
+      // for a newly created repo, "HEAD" will point to a ZERO objectId which will be removed from allRefs
+      // so we should add back it
+      return Collections.singleton(new SymbolicRef(Constants.HEAD,
+          new ObjectIdRef.Unpeeled(Ref.Storage.NEW, Constants.R_HEADS + Constants.MASTER, null)));
+    }
+    return allRefs.values();
   }
 
   @Override
@@ -26,14 +33,16 @@ public class RefServiceImpl implements RpcRefService {
     try {
       Ref ref = repo.exactRef(oldRef.getName());
       if (equalsRef(ref, oldRef)) {
-        RefUpdate update = repo.updateRef(ref.getName());
+        RefUpdate update = repo.updateRef(oldRef.getName());
         RefUpdate.Result result;
         if (newRef.isSymbolic()) {
           result = update.link(newRef.getTarget().getName());
         } else {
+          if(ref!=null && ref.isSymbolic())
+            update.setDetachingSymbolicRef();
           update.setExpectedOldObjectId(oldRef.getObjectId());
           update.setNewObjectId(newRef.getObjectId());
-          result = update.update();
+          result = update.forceUpdate();
         }
         return handleRefResult(result);
       } else {
@@ -60,7 +69,7 @@ public class RefServiceImpl implements RpcRefService {
 
   private boolean equalsRef(Ref ref, Ref oldRef) {
     if (ref == null) {
-      return oldRef.getStorage() == Ref.Storage.NEW && oldRef.getTarget() == null;
+      return oldRef.getStorage() == Ref.Storage.NEW;
     } else {
       if (ref.isSymbolic()) {
         return oldRef.isSymbolic() && ref.getTarget().getName().equals(oldRef.getTarget().getName());

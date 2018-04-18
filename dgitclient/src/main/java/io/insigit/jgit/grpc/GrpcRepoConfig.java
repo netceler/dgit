@@ -15,6 +15,11 @@ public class GrpcRepoConfig extends StoredConfig {
   public GrpcRepoConfig(RepoManagerGrpc.RepoManagerBlockingStub stub, String name) {
     this.stub = stub;
     this.name = name;
+    try {
+      load();
+    } catch (IOException | ConfigInvalidException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

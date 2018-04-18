@@ -8,6 +8,7 @@ import org.eclipse.jgit.internal.storage.dfs.DfsObjDatabase;
 import org.eclipse.jgit.internal.storage.dfs.DfsRepository;
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryBuilder;
 import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.util.FS;
 
 public class RpcRepository extends DfsRepository {
 
@@ -43,6 +44,11 @@ public class RpcRepository extends DfsRepository {
   @Override
   public StoredConfig getConfig() {
     return repoService.getConfig();
+  }
+
+  @Override
+  public FS getFS() {
+    return FS.detect();
   }
 
   public RpcRefService getRefService() {

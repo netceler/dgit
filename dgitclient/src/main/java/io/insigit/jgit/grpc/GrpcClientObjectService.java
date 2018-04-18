@@ -16,21 +16,22 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
-public class GrpcClientObjectService implements RpcObjectService {
+public class GrpcClientObjectService implements RpcObjectService<Inserter> {
 
   public static final int BUFFER_SIZE = 8 * 1024;
   private final ObjectServiceGrpc.ObjectServiceBlockingStub stub;
-  private final ObjectServiceGrpc.ObjectServiceStub asycStub;
+  private final ObjectServiceGrpc.ObjectServiceStub asyncStub;
 
   public GrpcClientObjectService(RepoClient client) {
     stub = ObjectServiceGrpc.newBlockingStub(client.channel());
-    asycStub = ObjectServiceGrpc.newStub(client.channel());
+    asyncStub = ObjectServiceGrpc.newStub(client.channel());
   }
 
   @Override
@@ -52,16 +53,32 @@ public class GrpcClientObjectService implements RpcObjectService {
     OpenRequest request = OpenRequest.newBuilder()
         .setObjectHint(typeHint)
         .setObjectId(Converters.toObjId(objectId)).build();
-    Iterator<OpenReply> result = stub.open(request);
-    if (!result.hasNext()) {
-      throw new MissingObjectException(ObjectId.fromString(objectId.name()), typeHint);
-    } else {
-      return new GrpcClientObjectLoader(result);
+    ArrayBlockingQueue<OpenReply> queue=new ArrayBlockingQueue<>(1);
+    asyncStub.open(request, new StreamObserver<OpenReply>() {
+      @Override
+      public void onNext(OpenReply openReply) {
+        queue.add(openReply);
+      }
+
+      @Override
+      public void onError(Throwable throwable) {
+        throwable.printStackTrace();
+      }
+
+      @Override
+      public void onCompleted() {
+        queue.add(null);
+      }
+    });
+    try {
+      return new GrpcClientObjectLoader(queue);
+    } catch (InterruptedException e) {
+      throw new IOException(e);
     }
   }
 
   @Override
-  public ObjectId insert(int inserterId,int objectType, long length, InputStream in) throws IOException {
+  public ObjectId insert(Inserter inserter, int objectType, long length, InputStream in) throws IOException {
     CompletableFuture<ObjectId> result = new CompletableFuture<>();
     StreamObserver<io.insight.jgit.ObjectId> responseObserver = new StreamObserver<io.insight.jgit.ObjectId>() {
       @Override
@@ -78,15 +95,25 @@ public class GrpcClientObjectService implements RpcObjectService {
       public void onCompleted() {
       }
     };
-    StreamObserver<ObjectInsertRequest> requestObserver = asycStub.insert(responseObserver);
-    byte[] buf = new byte[BUFFER_SIZE];
-    int read;
-    while ((read = in.read(buf)) != -1) {
+    StreamObserver<ObjectInsertRequest> requestObserver = asyncStub.insert(responseObserver);
+    if (length > 0) {
+      byte[] buf = new byte[BUFFER_SIZE];
+      int read;
+      while ((read = in.read(buf)) != -1) {
+        ObjectInsertRequest req = ObjectInsertRequest.newBuilder()
+            .setInserter(inserter)
+            .setObjectType(objectType)
+            .setTotalLength(length)
+            .setData(ByteString.copyFrom(buf, 0, read))
+            .build();
+        requestObserver.onNext(req);
+      }
+    } else {
       ObjectInsertRequest req = ObjectInsertRequest.newBuilder()
-          .setInserter(Inserter.newBuilder().setId(inserterId).build())
+          .setInserter(inserter)
           .setObjectType(objectType)
           .setTotalLength(length)
-          .setData(ByteString.copyFrom(buf, 0, read))
+          .clearData()
           .build();
       requestObserver.onNext(req);
     }
@@ -102,7 +129,7 @@ public class GrpcClientObjectService implements RpcObjectService {
   }
 
   @Override
-  public PackParser newPackParser(RpcObjDatabase odb, InputStream in) throws IOException {
+  public PackParser newPackParser(Inserter Inserter, RpcObjDatabase odb, InputStream in) throws IOException {
     CompletableFuture<Void> serverFuture = new CompletableFuture<>();
     StreamObserver<Empty> serverObserver = new StreamObserver<Empty>() {
       @Override
@@ -119,13 +146,22 @@ public class GrpcClientObjectService implements RpcObjectService {
         serverFuture.complete(null);
       }
     };
-    StreamObserver<PackParserRequest> observer = asycStub.newParser(serverObserver);
+    StreamObserver<PackParserRequest> observer = asyncStub.newParser(serverObserver);
 
-    return new GrpcPackParser(odb, in, observer, serverFuture);
+    return new GrpcPackParser(odb, Inserter, in, observer, serverFuture);
   }
 
   @Override
   public ObjectInserter newInserter(RpcObjDatabase odb) {
-    return new GrpcObjectInserter(odb, stub);
+    return new GrpcClientObjectInserter(odb, stub);
+  }
+
+  @Override
+  public boolean has(AnyObjectId objectId, int typeHint) {
+    OpenRequest request = OpenRequest.newBuilder()
+        .setObjectHint(typeHint)
+        .setObjectId(Converters.toObjId(objectId)).build();
+    HasReply result = stub.has(request);
+    return result.getHas();
   }
 }

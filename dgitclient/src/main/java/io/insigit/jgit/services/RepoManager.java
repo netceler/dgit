@@ -22,6 +22,6 @@ public interface RepoManager extends RepositoryResolver<Object> {
 
   Repository create(String name);
 
-  void delete(String name);
+  void delete(String name) throws IOException;
 
 }

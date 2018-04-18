@@ -85,6 +85,7 @@ service ObjectService {
     rpc shallowCommits (Empty) returns (ObjectIdList) {
     };
     rpc open (OpenRequest) returns (stream OpenReply) {}
+    rpc has (OpenRequest) returns (HasReply) {}
     rpc newInserter (Empty) returns (Inserter) {}
     rpc flushInserter (Inserter) returns (Empty) {}
     rpc closeInserter (Inserter) returns (Empty) {}
@@ -116,6 +117,9 @@ message OpenReply {
     int64 size =2;
     int32 type = 3;
     bytes data = 4;
+}
+message HasReply {
+    bool has =1;
 }
 message PackParserRequest {
     Inserter inserter = 1;

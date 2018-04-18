@@ -22,6 +22,9 @@ import static io.insight.jgit.server.grpc.RepoNameServerInterceptor.REPO_CTX_KEY
 import static io.insigit.jgit.grpc.GrpcClientObjectService.BUFFER_SIZE;
 
 public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
+  private AtomicInteger inserterIdSeq = new AtomicInteger(0);
+  private ConcurrentHashMap<Integer, ObjectInserter> inserters = new ConcurrentHashMap<>();
+
   private ObjectServiceImpl getImpl() {
     Repository repo = REPO_CTX_KEY.get();
     return new ObjectServiceImpl(repo);
@@ -83,6 +86,19 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
   }
 
   @Override
+  public void has(OpenRequest request, StreamObserver<HasReply> responseObserver) {
+    ObjectServiceImpl impl = getImpl();
+    ObjectId objectId = ObjectId.fromString(request.getObjectId().getId());
+    try {
+      boolean result = impl.has(objectId, request.getObjectHint());
+      responseObserver.onNext(HasReply.newBuilder().setHas(result).build());
+      responseObserver.onCompleted();
+    } catch (IOException e) {
+      responseObserver.onError(e);
+    }
+  }
+
+  @Override
   public StreamObserver<ObjectInsertRequest> insert(StreamObserver<io.insight.jgit.ObjectId> responseObserver) {
 
     return new StreamObserver<ObjectInsertRequest>() {
@@ -103,10 +119,8 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
             responseObserver.onError(e);
           }
         }
-        ByteBuffer bb = buf.nioBuffer(buf.writerIndex(), buf.writableBytes());
-        ByteString data = req.getData();
-        data.copyTo(bb);
-        buf.writerIndex(buf.writerIndex() + data.size());
+        if (!req.getData().isEmpty())
+          buf.readFrom(req.getData());
       }
 
       @Override
@@ -116,21 +130,20 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
 
       @Override
       public void onCompleted() {
-        buf.setIndex(0, length);
-        InputStream in = new ByteBufferBackedInputStream(buf.nioBuffer());
-        try {
-          ObjectInserter inserter = inserters.get(inserterId);
-          if (inserter != null) {
-            ObjectId result = inserter.insert(objectType, length, in);
-            responseObserver.onNext(io.insight.jgit.ObjectId.newBuilder().setId(
-                result.getName()).build());
-          } else {
-            responseObserver.onError(new Exception("inserter not found: " + inserterId));
-          }
-        } catch (IOException e) {
-          responseObserver.onError(e);
-        } finally {
-          if (buf != null) {
+        if (buf != null) {
+          InputStream in = new ByteBufferBackedInputStream(buf.nioBuffer());
+          try {
+            ObjectInserter inserter = inserters.get(inserterId);
+            if (inserter != null) {
+              ObjectId result = inserter.insert(objectType, length, in);
+              responseObserver.onNext(io.insight.jgit.ObjectId.newBuilder().setId(
+                  result.getName()).build());
+            } else {
+              responseObserver.onError(new Exception("inserter not found: " + inserterId));
+            }
+          } catch (IOException e) {
+            responseObserver.onError(e);
+          } finally {
             try {
               buf.close();
             } catch (Exception e) {
@@ -138,12 +151,11 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
             }
           }
         }
+        responseObserver.onCompleted();
       }
     };
   }
 
-  private AtomicInteger inserterIdSeq = new AtomicInteger(0);
-  private ConcurrentHashMap<Integer, ObjectInserter> inserters = new ConcurrentHashMap<>();
 
   @Override
   public void newInserter(Empty request, StreamObserver<Inserter> responseObserver) {
@@ -200,13 +212,10 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
           if (inserter == null) {
             responseObserver.onError(new Exception("inserter not found: " + id));
           } else {
-              if (buf == null) {
-                buf = FileCachedByteBuffer.createBuffer();
-              }
-            ByteBuffer bb = buf.nioBuffer(buf.writerIndex(), buf.writableBytes());
-            ByteString data = req.getData();
-            data.copyTo(bb);
-            buf.writerIndex(buf.writerIndex() + data.size());
+            if (buf == null) {
+              buf = FileCachedByteBuffer.createBuffer();
+            }
+            buf.readFrom(req.getData());
           }
         } catch (Exception e) {
           responseObserver.onError(e);

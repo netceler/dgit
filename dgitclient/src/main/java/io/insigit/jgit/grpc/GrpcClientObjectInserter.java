@@ -12,25 +12,31 @@ import org.eclipse.jgit.transport.PackParser;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class GrpcObjectInserter extends ObjectInserter {
+public class GrpcClientObjectInserter extends ObjectInserter {
   private final ObjectServiceGrpc.ObjectServiceBlockingStub stub;
   private RpcObjDatabase db;
   private Inserter inserter;
 
-  public GrpcObjectInserter(RpcObjDatabase db, ObjectServiceGrpc.ObjectServiceBlockingStub stub) {
+  public GrpcClientObjectInserter(RpcObjDatabase db, ObjectServiceGrpc.ObjectServiceBlockingStub stub) {
     this.db = db;
     this.inserter = stub.newInserter(Empty.getDefaultInstance());
     this.stub=stub;
   }
+  private synchronized Inserter getInserter() {
+    if (inserter == null) {
+      this.inserter = stub.newInserter(Empty.getDefaultInstance());
+    }
+    return this.inserter;
+  }
 
   @Override
   public ObjectId insert(int objectType, long length, InputStream in) throws IOException {
-    return db.getObjectService().insert(this.inserter.getId(),objectType, length, in);
+    return db.getObjectService().insert(getInserter(),objectType, length, in);
   }
 
   @Override
   public PackParser newPackParser(InputStream in) throws IOException {
-    return db.getObjectService().newPackParser(db, in);
+    return db.getObjectService().newPackParser(getInserter(),db, in);
   }
 
   @Override
@@ -46,5 +52,6 @@ public class GrpcObjectInserter extends ObjectInserter {
   @Override
   public void close() {
     this.stub.closeInserter(inserter);
+    this.inserter = null;
   }
 }

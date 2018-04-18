@@ -1,5 +1,6 @@
 package io.insight.jgit.server.services;
 
+import io.insight.jgit.Inserter;
 import io.insigit.jgit.RpcObjDatabase;
 import io.insigit.jgit.services.RpcObjectService;
 import org.eclipse.jgit.lib.*;
@@ -10,7 +11,7 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.Set;
 
-public class ObjectServiceImpl implements RpcObjectService {
+public class ObjectServiceImpl implements RpcObjectService<Inserter> {
   private Repository repo;
 
   public ObjectServiceImpl(Repository repository) {
@@ -37,17 +38,24 @@ public class ObjectServiceImpl implements RpcObjectService {
   }
 
   @Override
-  public ObjectId insert(int inserterId, int objectType, long length, InputStream in) throws IOException {
+  public ObjectId insert(Inserter inserterId, int objectType, long length, InputStream in) throws IOException {
     return repo.getObjectDatabase().newInserter().insert(objectType, length, in);
   }
 
   @Override
-  public PackParser newPackParser(RpcObjDatabase odb, InputStream in) throws IOException {
+  public PackParser newPackParser(Inserter inserterId, RpcObjDatabase odb, InputStream in) throws IOException {
     return repo.getObjectDatabase().newInserter().newPackParser(in);
   }
 
   @Override
   public ObjectInserter newInserter(RpcObjDatabase odb) {
     return repo.newObjectInserter();
+  }
+
+  @Override
+  public boolean has(AnyObjectId objectId, int typeHint) throws IOException {
+    try (final ObjectReader or = repo.getObjectDatabase().newReader()) {
+      return or.has(objectId, typeHint);
+    }
   }
 }

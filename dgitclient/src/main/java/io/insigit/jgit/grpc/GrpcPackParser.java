@@ -2,6 +2,7 @@ package io.insigit.jgit.grpc;
 
 import com.google.protobuf.ByteString;
 import io.grpc.stub.StreamObserver;
+import io.insight.jgit.Inserter;
 import io.insight.jgit.PackParserRequest;
 import io.insigit.jgit.RpcObjDatabase;
 import org.eclipse.jgit.internal.storage.file.PackLock;
@@ -15,12 +16,14 @@ import java.io.InputStream;
 import java.util.concurrent.CompletableFuture;
 
 public class GrpcPackParser extends PackParser {
+  private Inserter inserter;
   private final StreamObserver<PackParserRequest> observer;
   private final CompletableFuture<Void> serverFuture;
   private final InputStream in;
 
-  public GrpcPackParser(RpcObjDatabase db, InputStream src, StreamObserver<PackParserRequest> observer, CompletableFuture<Void> serverFuture) {
+  public GrpcPackParser(RpcObjDatabase db, Inserter inserter, InputStream src, StreamObserver<PackParserRequest> observer, CompletableFuture<Void> serverFuture) {
     super(db, src);
+    this.inserter = inserter;
     this.observer = observer;
     this.in = src;
     this.serverFuture = serverFuture;
@@ -33,6 +36,7 @@ public class GrpcPackParser extends PackParser {
       int read;
       while ((read = in.read(buf)) != -1) {
         PackParserRequest.Builder req = PackParserRequest.newBuilder()
+            .setInserter(inserter)
             .setData(ByteString.copyFrom(buf, 0, read));
         observer.onNext(req.build());
       }

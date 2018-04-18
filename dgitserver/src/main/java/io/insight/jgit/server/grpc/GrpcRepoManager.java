@@ -58,9 +58,14 @@ public class GrpcRepoManager extends RepoManagerGrpc.RepoManagerImplBase {
   public void deleteRepo(RepoName request, StreamObserver<RepoReply> responseObserver) {
     String name = request.getName();
     boolean exists = localRepoManager.exists(name);
-    if (exists)
-      localRepoManager.delete(request.getName());
-    responseObserver.onNext(RepoReply.newBuilder().setRepoExists(exists).build());
-    responseObserver.onCompleted();
+    if (exists) {
+      try {
+        localRepoManager.delete(request.getName());
+        responseObserver.onNext(RepoReply.newBuilder().setRepoExists(exists).build());
+        responseObserver.onCompleted();
+      } catch (IOException e) {
+        responseObserver.onError(e);
+      }
+    }
   }
 }

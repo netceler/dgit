@@ -10,8 +10,10 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.internal.storage.file.PackFile;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.util.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
@@ -66,10 +68,10 @@ public class LocalDiskRepoManager implements RepoManager{
   }
 
   @Override
-  public void delete(String name) {
+  public void delete(String name) throws IOException {
     repoCache.invalidate(name);
     File repoDir = new File(baseDir, name);
-    repoDir.delete();
+    FileUtils.delete(repoDir,FileUtils.RECURSIVE | FileUtils.RETRY);
   }
 
   public boolean exists(String name) {
