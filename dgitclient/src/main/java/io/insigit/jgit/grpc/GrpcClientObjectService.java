@@ -1,7 +1,7 @@
 package io.insigit.jgit.grpc;
 
 import com.google.protobuf.ByteString;
-import io.grpc.Status;
+import io.grpc.ManagedChannel;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import io.insight.jgit.*;
@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -34,10 +33,14 @@ public class GrpcClientObjectService implements RpcObjectService<Inserter> {
   public static final int BUFFER_SIZE = 8 * 1024;
   private final ObjectServiceGrpc.ObjectServiceBlockingStub stub;
   private final ObjectServiceGrpc.ObjectServiceStub asyncStub;
+  public final ManagedChannel channel;
+
 
   public GrpcClientObjectService(RepoClient client) {
-    stub = ObjectServiceGrpc.newBlockingStub(client.channel());
-    asyncStub = ObjectServiceGrpc.newStub(client.channel());
+    channel = client.channel();
+    stub = ObjectServiceGrpc.newBlockingStub(channel);
+    asyncStub = ObjectServiceGrpc.newStub(channel);
+
   }
 
   @Override
@@ -133,25 +136,7 @@ public class GrpcClientObjectService implements RpcObjectService<Inserter> {
 
   @Override
   public PackParser newPackParser(Inserter Inserter, RpcObjDatabase odb, InputStream in) throws IOException {
-    CompletableFuture<Void> serverFuture = new CompletableFuture<>();
-    StreamObserver<Empty> serverObserver = new StreamObserver<Empty>() {
-      @Override
-      public void onNext(Empty value) {
-      }
-
-      @Override
-      public void onError(Throwable t) {
-        serverFuture.completeExceptionally(t);
-      }
-
-      @Override
-      public void onCompleted() {
-        serverFuture.complete(null);
-      }
-    };
-    StreamObserver<PackParserRequest> observer = asyncStub.newParser(serverObserver);
-
-    return new GrpcPackParser(odb, Inserter, in, observer, serverFuture);
+    return new GrpcPackParser(odb, Inserter, in, channel);
   }
 
   @Override

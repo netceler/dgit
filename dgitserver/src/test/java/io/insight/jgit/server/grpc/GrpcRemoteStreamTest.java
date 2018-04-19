@@ -21,6 +21,7 @@ public class GrpcRemoteStreamTest {
   private Server server;
   public GrpcRemoteStream service;
   private GrpcClientRemoteStream client;
+  private ManagedChannel channel;
 
   @Before
   public void setUp() throws Exception {
@@ -29,10 +30,10 @@ public class GrpcRemoteStreamTest {
         .addService(service)
         .build();
     server.start();
-    ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 12345)
+    channel = ManagedChannelBuilder.forAddress("localhost", 12345)
         .usePlaintext()
         .build();
-    client = new GrpcClientRemoteStream(channel);
+
 
   }
 
@@ -45,7 +46,7 @@ public class GrpcRemoteStreamTest {
   public void remoteStream() throws IOException {
     byte[] bytes = new byte[]{0, 1, 2, 3, 4};
     InputStream localStream = new ByteArrayInputStream(bytes);
-    int id = client.newRemoteInputStream(localStream);
+    long id = GrpcClientRemoteStream.newRemoteStream(channel,localStream);
     assertEquals(0, id);
     InputStream remoteStream = service.get(id);
     assertNotNull(remoteStream);
@@ -57,10 +58,11 @@ public class GrpcRemoteStreamTest {
     assertEquals(0, buf[0]);
     assertEquals(1, buf[1]);
     remoteStream.mark(2);
-    read = remoteStream.read(buf);
-    assertEquals(2, read);
-    assertEquals(2, buf[0]);
-    assertEquals(3, buf[1]);
+    byte[] buf2 =new byte[20];
+    read = remoteStream.read(buf2);
+    assertEquals(3, read);
+    assertEquals(2, buf2[0]);
+    assertEquals(3, buf2[1]);
     remoteStream.reset();
     int b = remoteStream.read();
     assertEquals(2, b);

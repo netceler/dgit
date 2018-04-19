@@ -17,11 +17,12 @@ public class GrpcServer {
     repoManager = new LocalDiskRepoManager(baseDir, MAX_OPEN_REPOS);
     RepoNameServerInterceptor interceptor=new RepoNameServerInterceptor(repoManager);
     GrpcRefService grpcRefService = new GrpcRefService();
-    GrpcObjectService grpcObjectService = new GrpcObjectService();
+    GrpcRemoteStream grpcRemoteStream= new GrpcRemoteStream();
+    GrpcObjectService grpcObjectService = new GrpcObjectService(grpcRemoteStream);
     GrpcRepoManager grpcRepoManager = new GrpcRepoManager(repoManager);
-
     server = ServerBuilder.forPort(port)
         .addService(grpcRepoManager)
+        .addService(grpcRemoteStream)
         .addService(ServerInterceptors.intercept(grpcRefService, interceptor))
         .addService(ServerInterceptors.intercept(grpcObjectService, interceptor))
         .build();

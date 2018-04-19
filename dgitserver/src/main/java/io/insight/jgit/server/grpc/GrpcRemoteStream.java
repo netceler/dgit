@@ -18,17 +18,17 @@ import java.io.InputStream;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class GrpcRemoteStream extends RemoteStreamGrpc.RemoteStreamImplBase {
   private static final Logger logger = LoggerFactory.getLogger(GrpcRemoteStream.class);
 
-  private AtomicInteger seq = new AtomicInteger();
-  private ConcurrentHashMap<Integer, InputStream> map = new ConcurrentHashMap<>();
+  private AtomicLong seq = new AtomicLong();
+  private ConcurrentHashMap<Long, RemoteInputStream> map = new ConcurrentHashMap<>();
 
   @Override
   public StreamObserver<StreamRequest> inputStream(StreamObserver<StreamReply> responseObserver) {
-    int id = seq.getAndIncrement();
+    long id = seq.getAndIncrement();
     ArrayBlockingQueue queue = new ArrayBlockingQueue<>(1);
     AtomicBoolean marksupport = new AtomicBoolean(false);
 
@@ -58,119 +58,140 @@ public class GrpcRemoteStream extends RemoteStreamGrpc.RemoteStreamImplBase {
         queue.offer(null);
       }
     };
-    InputStream in = new InputStream() {
-      @Override
-      public int read() throws IOException {
-        responseObserver.onNext(StreamReply.newBuilder()
-            .setCmd(StreamCmd.READ)
-            .setArg(1)
-            .build());
-        StreamRequest.DataChunk data = awaitResponse();
-        return data.getData().toByteArray()[0];
-      }
-
-      private StreamRequest.DataChunk awaitResponse() throws IOException {
-        try {
-          Object d = queue.take();
-          if (d == null) {
-            throw new EOFException();
-          } else if (d instanceof Throwable) {
-            return handleException((Throwable)d);
-          } else {
-            return (DataChunk) d;
-          }
-        } catch (InterruptedException e) {
-          throw new IOException(e);
-        }
-      }
-
-      private DataChunk handleException(Throwable d) throws IOException {
-        if (d instanceof StatusRuntimeException) {
-          Status status = ((StatusRuntimeException) d).getStatus();
-          if (status.getCode() == Status.Code.INTERNAL) {
-            throw new IOException(status.getDescription());
-          }
-        }
-        throw new IOException(d);
-      }
-
-      @Override
-      public int read(byte[] b, int off, int len) throws IOException {
-        responseObserver.onNext(StreamReply.newBuilder()
-            .setCmd(StreamCmd.READ)
-            .setArg(len)
-            .build());
-        DataChunk chunk = awaitResponse();
-        if (chunk.getRet() == -1) {
-          return -1;
-        }
-        ByteString data = chunk.getData();
-        data.copyTo(b, off);
-        return chunk.getData().size();
-      }
-
-      @Override
-      public synchronized long skip(long n) throws IOException {
-        if (n < 0) {
-          return 0;
-        }
-        responseObserver.onNext(StreamReply.newBuilder()
-            .setCmd(StreamCmd.SKIP)
-            .setArg(n)
-            .build());
-        DataChunk chunk = awaitResponse();
-        return chunk.getRet();
-      }
-
-      @Override
-      public synchronized int available() throws IOException {
-        responseObserver.onNext(StreamReply.newBuilder()
-            .setCmd(StreamCmd.AVAIL)
-            .clearArg()
-            .build());
-        DataChunk chunk = awaitResponse();
-        return (int) chunk.getRet();
-      }
-
-      @Override
-      public synchronized void mark(int readlimit) {
-        responseObserver.onNext(StreamReply.newBuilder()
-            .setCmd(StreamCmd.MARK)
-            .setArg(readlimit)
-            .build());
-        try {
-          awaitResponse();
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-
-      @Override
-      public boolean markSupported() {
-        return marksupport.get();
-      }
-
-      @Override
-      public synchronized void reset() throws IOException {
-        responseObserver.onNext(StreamReply.newBuilder()
-            .setCmd(StreamCmd.RESET)
-            .clearArg()
-            .build());
-        awaitResponse();
-      }
-
-      @Override
-      public synchronized void close() throws IOException {
-        responseObserver.onCompleted();
-        map.remove(id);
-      }
-    };
+    RemoteInputStream in = new RemoteInputStream(id, responseObserver, queue, marksupport);
     map.put(id, in);
     return observer;
   }
 
-  public InputStream get(int id) {
+  public RemoteInputStream get(long id) {
     return map.get(id);
   }
 
+  public class RemoteInputStream extends InputStream {
+    private final StreamObserver<StreamReply> responseObserver;
+    private final ArrayBlockingQueue queue;
+    private final AtomicBoolean marksupport;
+    private final long id;
+
+    public RemoteInputStream(long id, StreamObserver<StreamReply> responseObserver, ArrayBlockingQueue queue, AtomicBoolean markSupport) {
+      this.responseObserver = responseObserver;
+      this.queue = queue;
+      this.marksupport = markSupport;
+      this.id = id;
+    }
+
+    @Override
+    public int read() throws IOException {
+      responseObserver.onNext(StreamReply.newBuilder()
+          .setCmd(StreamCmd.READ)
+          .setArg(1)
+          .build());
+      DataChunk data = awaitResponse();
+      return data.getData().toByteArray()[0];
+    }
+
+    private DataChunk awaitResponse() throws IOException {
+      try {
+        Object d = queue.take();
+        if (d == null) {
+          throw new EOFException();
+        } else if (d instanceof Throwable) {
+          return handleException((Throwable)d);
+        } else {
+          return (DataChunk) d;
+        }
+      } catch (InterruptedException e) {
+        throw new IOException(e);
+      }
+    }
+
+    private DataChunk handleException(Throwable d) throws IOException {
+      if (d instanceof StatusRuntimeException) {
+        Status status = ((StatusRuntimeException) d).getStatus();
+        if (status.getCode() == Status.Code.INTERNAL) {
+          throw new IOException(status.getDescription());
+        }
+      }
+      throw new IOException(d);
+    }
+
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+      responseObserver.onNext(StreamReply.newBuilder()
+          .setCmd(StreamCmd.READ)
+          .setArg(len)
+          .build());
+      DataChunk chunk = awaitResponse();
+      if (chunk.getRet() == -1) {
+        return -1;
+      }
+      ByteString data = chunk.getData();
+      data.copyTo(b, off);
+      return chunk.getData().size();
+    }
+
+    @Override
+    public synchronized long skip(long n) throws IOException {
+      if (n < 0) {
+        return 0;
+      }
+      responseObserver.onNext(StreamReply.newBuilder()
+          .setCmd(StreamCmd.SKIP)
+          .setArg(n)
+          .build());
+      DataChunk chunk = awaitResponse();
+      return chunk.getRet();
+    }
+
+    @Override
+    public synchronized int available() throws IOException {
+      responseObserver.onNext(StreamReply.newBuilder()
+          .setCmd(StreamCmd.AVAIL)
+          .clearArg()
+          .build());
+      DataChunk chunk = awaitResponse();
+      return (int) chunk.getRet();
+    }
+
+    @Override
+    public synchronized void mark(int readlimit) {
+      responseObserver.onNext(StreamReply.newBuilder()
+          .setCmd(StreamCmd.MARK)
+          .setArg(readlimit)
+          .build());
+      try {
+        awaitResponse();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public boolean markSupported() {
+      return marksupport.get();
+    }
+
+    @Override
+    public synchronized void reset() throws IOException {
+      responseObserver.onNext(StreamReply.newBuilder()
+          .setCmd(StreamCmd.RESET)
+          .clearArg()
+          .build());
+      awaitResponse();
+    }
+
+    @Override
+    public synchronized void close() throws IOException {
+      responseObserver.onNext(StreamReply.newBuilder()
+          .setCmd(StreamCmd.CLOSE)
+          .clearArg()
+          .build());
+      disconnect();
+    }
+
+    public void disconnect() {
+      responseObserver.onCompleted();
+      map.remove(id);
+    }
+  }
 }

@@ -29,6 +29,11 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
   private AtomicInteger inserterIdSeq = new AtomicInteger(0);
   private ConcurrentHashMap<Integer, ObjectInserter> inserters = new ConcurrentHashMap<>();
   private static final Logger logger = LoggerFactory.getLogger(GrpcObjectService.class);
+  private GrpcRemoteStream remoteStream;
+
+  public GrpcObjectService(GrpcRemoteStream grpcRemoteStream) {
+    remoteStream = grpcRemoteStream;
+  }
 
   private ObjectServiceImpl getImpl() {
     Repository repo = REPO_CTX_KEY.get();
@@ -238,58 +243,18 @@ public class GrpcObjectService extends ObjectServiceGrpc.ObjectServiceImplBase {
   }
 
   @Override
-  public StreamObserver<PackParserRequest> newParser(StreamObserver<Empty> responseObserver) {
-    return new StreamObserver<PackParserRequest>() {
-      public int inserterId;
-      ObjectInserter inserter;
-      FileCachedByteBuffer.ClosableByteBuf buf;
-
-      @Override
-      public void onNext(PackParserRequest req) {
-        try {
-          inserterId = req.getInserter().getId();
-          inserter = inserters.get(inserterId);
-          if (inserter == null) {
-            responseObserver.onError(
-                Status.INTERNAL.withDescription("inserter not found: " + inserterId).asRuntimeException());
-          } else {
-            if (buf == null) {
-              buf = FileCachedByteBuffer.createBuffer();
-              if (logger.isDebugEnabled())
-                logger.debug("inserter:{} newParser", inserterId);
-            }
-            buf.readFrom(req.getData());
-          }
-        } catch (Exception e) {
-          responseObserver.onError(e);
-        }
-      }
-
-      @Override
-      public void onError(Throwable t) {
-
-      }
-
-      @Override
-      public void onCompleted() {
-        InputStream in = new ByteBufferBackedInputStream(buf.nioBuffer());
-        try {
-          PackParser parser = inserter.newPackParser(in);
-          parser.parse(NullProgressMonitor.INSTANCE);
-          responseObserver.onNext(Empty.getDefaultInstance());
-          responseObserver.onCompleted();
-          if (logger.isDebugEnabled())
-            logger.debug("inserter:{} parse done.", inserterId);
-        } catch (IOException e) {
-          responseObserver.onError(e);
-        } finally {
-          try {
-            buf.close();
-          } catch (Exception e) {
-            responseObserver.onError(e);
-          }
-        }
-      }
-    };
+  public void parse(PackParserRequest request, StreamObserver<Empty> responseObserver) {
+    ObjectInserter inserter = inserters.get(request.getInserter().getId());
+    GrpcRemoteStream.RemoteInputStream in = remoteStream.get(request.getStreamId());
+    try {
+      PackParser parser = inserter.newPackParser(in);
+      parser.parse(NullProgressMonitor.INSTANCE);
+      responseObserver.onNext(Empty.getDefaultInstance());
+      responseObserver.onCompleted();
+    } catch (IOException e) {
+      responseObserver.onError(Status.INTERNAL.withDescription(e.getMessage()).withCause(e).asRuntimeException());
+    } finally {
+      in.disconnect();
+    }
   }
 }

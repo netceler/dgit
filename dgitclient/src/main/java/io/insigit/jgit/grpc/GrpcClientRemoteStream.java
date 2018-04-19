@@ -18,15 +18,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class GrpcClientRemoteStream {
-  private final RemoteStreamGrpc.RemoteStreamStub stub;
+
   private static final Logger logger = LoggerFactory.getLogger(GrpcClientRemoteStream.class);
 
-  public GrpcClientRemoteStream(ManagedChannel channel) {
-    this.stub = RemoteStreamGrpc.newStub(channel);
-  }
-
-  public int newRemoteInputStream(InputStream inputStream) {
-    CompletableFuture<Integer> future = new CompletableFuture<>();
+  public static long newRemoteStream(ManagedChannel channel, InputStream inputStream) {
+    RemoteStreamGrpc.RemoteStreamStub stub = RemoteStreamGrpc.newStub(channel);
+    CompletableFuture<Long> future = new CompletableFuture<>();
     AtomicReference<StreamObserver<StreamRequest>> ref = new AtomicReference<>();
     ref.set(stub.inputStream(new StreamObserver<StreamReply>() {
 
@@ -36,7 +33,7 @@ public class GrpcClientRemoteStream {
           switch (req.getCmd()) {
             case INIT:
               if (!future.isDone())
-                future.complete((int) req.getArg());
+                future.complete(req.getArg());
               break;
             case READ:
               byte[] buffer = new byte[(int) req.getArg()];
@@ -44,7 +41,7 @@ public class GrpcClientRemoteStream {
               ref.get().onNext(
                   StreamRequest.newBuilder().setDataChunk(
                       DataChunk.newBuilder()
-                          .setData(ByteString.copyFrom(buffer))
+                          .setData(ByteString.copyFrom(buffer,0,read))
                           .setRet(read)).build());
               break;
             case SKIP:
@@ -78,6 +75,9 @@ public class GrpcClientRemoteStream {
                       DataChunk.newBuilder()
                           .clearData()
                           .setRet(avail)).build());
+              break;
+            case CLOSE:
+              inputStream.close();
           }
         } catch (IOException e) {
           ref.get().onError(Status.INTERNAL.
@@ -94,13 +94,7 @@ public class GrpcClientRemoteStream {
       }
 
       @Override
-      public void onCompleted() {
-        try {
-          inputStream.close();
-        } catch (IOException e) {
-          logger.error("close inputstream failed", e);
-        }
-      }
+      public void onCompleted() { }
     }));
     try {
 

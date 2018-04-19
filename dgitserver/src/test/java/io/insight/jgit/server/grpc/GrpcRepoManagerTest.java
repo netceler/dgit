@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -106,7 +107,7 @@ public class GrpcRepoManagerTest implements RepositoryResolver<DaemonClient> {
   }
 
   @Test
-  public void push() throws GitAPIException, URISyntaxException {
+  public void push() throws GitAPIException, URISyntaxException, IOException {
     String url = "https://github.com/lambdalab/test-repo.git";
     File tempDir = Files.createTempDir();
     tempDir.delete();
@@ -127,6 +128,21 @@ public class GrpcRepoManagerTest implements RepositoryResolver<DaemonClient> {
       for (RemoteRefUpdate update : r.getRemoteUpdates()) {
         assertEquals(RemoteRefUpdate.Status.OK, update.getStatus());
       }
+    }
+    repo = repoManager.open(repoName);
+
+    Ref head = repo.exactRef("refs/heads/master");
+    ArrayList<String> files=new ArrayList<>();
+    try (RevWalk walk = new RevWalk(repo)) {
+      RevCommit commit = walk.parseCommit(head.getObjectId());
+      RevTree tree = walk.parseTree(commit.getTree().getId());
+      TreeWalk treeWalk = new TreeWalk(repo);
+      treeWalk.addTree(tree);
+      treeWalk.setRecursive(true);
+      while (treeWalk.next()) {
+        files.add(treeWalk.getPathString());
+      }
+      treeWalk.close();
     }
   }
 

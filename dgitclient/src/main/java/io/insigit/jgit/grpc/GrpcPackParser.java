@@ -1,8 +1,11 @@
 package io.insigit.jgit.grpc;
 
 import com.google.protobuf.ByteString;
-import io.grpc.stub.StreamObserver;
+import io.grpc.ManagedChannel;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.insight.jgit.Inserter;
+import io.insight.jgit.ObjectServiceGrpc;
 import io.insight.jgit.PackParserRequest;
 import io.insigit.jgit.RpcObjDatabase;
 import org.eclipse.jgit.internal.storage.file.PackLock;
@@ -13,41 +16,33 @@ import org.eclipse.jgit.transport.PackedObjectInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public class GrpcPackParser extends PackParser {
+  private final long streamId;
+  private ObjectServiceGrpc.ObjectServiceBlockingStub stub;
   private Inserter inserter;
-  private final StreamObserver<PackParserRequest> observer;
-  private final CompletableFuture<Void> serverFuture;
-  private final InputStream in;
 
-  public GrpcPackParser(RpcObjDatabase db, Inserter inserter, InputStream src, StreamObserver<PackParserRequest> observer, CompletableFuture<Void> serverFuture) {
-    super(db, src);
+
+
+  public GrpcPackParser(RpcObjDatabase odb, Inserter inserter, InputStream in, ManagedChannel channel) {
+    super(odb,in);
     this.inserter = inserter;
-    this.observer = observer;
-    this.in = src;
-    this.serverFuture = serverFuture;
+    streamId = GrpcClientRemoteStream.newRemoteStream(channel, in);
+    stub = ObjectServiceGrpc.newBlockingStub(channel);
   }
 
   @Override
   public PackLock parse(ProgressMonitor receiving, ProgressMonitor resolving) throws IOException {
-    byte[] buf = new byte[GrpcClientObjectService.BUFFER_SIZE];
     try {
-      int read;
-      while ((read = in.read(buf)) != -1) {
-        PackParserRequest.Builder req = PackParserRequest.newBuilder()
-            .setInserter(inserter)
-            .setData(ByteString.copyFrom(buf, 0, read));
-        observer.onNext(req.build());
+      stub.parse(PackParserRequest.newBuilder()
+          .setInserter(inserter)
+          .setStreamId(streamId)
+          .build());
+    } catch (StatusRuntimeException e) {
+      if(e.getStatus().getCode()== Status.Code.INTERNAL){
+        throw new IOException(e.getStatus().getDescription());
       }
-      observer.onCompleted();
-    } catch (IOException e) {
-      observer.onError(e);
-    }
-    try {
-      serverFuture.get();
-    } catch (InterruptedException | ExecutionException e) {
       throw new IOException(e);
     }
     return null;
