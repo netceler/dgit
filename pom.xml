@@ -6,12 +6,8 @@
 
     <groupId>io.insight.git</groupId>
     <artifactId>dgit</artifactId>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
-    <modules>
-        <module>dgitserver</module>
-        <module>dgitclient</module>
-    </modules>
     <build>
         <plugins>
             <plugin>
