@@ -1,4 +1,5 @@
 import io.insight.jgit.KVRepoManager;
+import io.insight.jgit.cache.CachedRepoManager;
 import io.insight.jgit.jdbc.MysqlRepoManager;
 import org.eclipse.jgit.lib.RefUpdate;
 
@@ -37,6 +38,7 @@ public class JdbcRepoTest {
   public void setUp() throws Exception {
 
     repoManager = new MysqlRepoManager("jdbc:mysql://localhost:3306/test", "root", "lambdalab-dev");
+    repoManager = new CachedRepoManager(repoManager);
     if (repoManager.exists(repoName)) {
       repoManager.delete(repoName);
     }

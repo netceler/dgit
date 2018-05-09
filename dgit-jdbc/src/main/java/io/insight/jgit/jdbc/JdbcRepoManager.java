@@ -1,25 +1,13 @@
 package io.insight.jgit.jdbc;
 
 import io.insight.jgit.KVRepoManager;
-import io.insight.jgit.KVRepository;
-import io.insight.jgit.KVRepositoryBuilder;
-import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.util.FS;
 
 import java.io.IOException;
 
 import static io.insight.jgit.jdbc.jooq.Tables.*;
 
 public abstract class JdbcRepoManager implements KVRepoManager {
-  @Override
-  public Repository open(String name) throws RepositoryNotFoundException {
-    KVRepositoryBuilder options = new KVRepositoryBuilder();
-    options.setRepositoryName(name);
-    options.setFS(FS.detect());
-
-    return new KVRepository(this, options);
-  }
 
   @Override
   public boolean exists(String name) throws IOException {
@@ -44,6 +32,7 @@ public abstract class JdbcRepoManager implements KVRepoManager {
     });
   }
 
-  @Override
+
   public abstract JdbcAdapter adapter();
+ 
 }

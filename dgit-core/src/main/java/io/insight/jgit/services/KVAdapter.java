@@ -4,12 +4,9 @@ import java.io.IOException;
 
 public interface KVAdapter {
 
-  String loadConfig(String repositoryName) throws IOException;
+  KVConfigService configService();
 
-  void saveConfig(String repositoryName, String configText) throws IOException;
+  KVRefService refService();
 
-
-  KVRefService refService(String repositoryName);
-
-  KVObjectService objService(String repositoryName);
+  KVObjectService objService();
 }

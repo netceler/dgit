@@ -13,34 +13,36 @@ import java.util.Set;
 
 public class KVObjectReader extends ObjectReader {
 
+  private KVRepository repository;
   private KVObjectService objectService;
 
 
 
-  KVObjectReader(KVObjectService objectService) {
+  KVObjectReader(KVRepository repository, KVObjectService objectService) {
+    this.repository = repository;
     this.objectService = objectService;
   }
 
   @Override
   public ObjectReader newReader() {
-    return new KVObjectReader(objectService);
+    return new KVObjectReader(repository, objectService);
   }
 
   @Override
   public Collection<ObjectId> resolve(AbbreviatedObjectId id) throws IOException {
-    return objectService.resolve(id.name());
+    return objectService.resolve(repository.getRepositoryName(), id.name());
   }
 
   @Override
   public ObjectLoader open(AnyObjectId objectId, int typeHint) throws MissingObjectException, IncorrectObjectTypeException, IOException {
-    KVObject object= objectService.loadObject(objectId);
+    KVObject object= objectService.loadObject(repository.getRepositoryName(), objectId);
     if (object == null) {
       if (typeHint == OBJ_ANY)
         throw new MissingObjectException(objectId.copy(),
             JGitText.get().unknownObjectType2);
       throw new MissingObjectException(objectId.copy(), typeHint);
     }
-    return new KVObjectLoader(object,objectService);
+    return new KVObjectLoader(repository.getRepositoryName(), object,objectService);
   }
 
   @Override

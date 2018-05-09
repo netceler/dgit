@@ -19,6 +19,7 @@ import java.util.zip.CRC32;
 public class KVPackParser extends PackParser {
 
   private final KVObjectService objectService;
+  private final String repositoryName;
 
   private HashMap<Long, ObjectInfo> objectsByPos = new HashMap<>();
   private final CRC32 crc;
@@ -30,6 +31,7 @@ public class KVPackParser extends PackParser {
     super(objectDatabase, in);
     this.objectService = objectService;
     this.crc = new CRC32();
+    this.repositoryName = objectDatabase.getRepository().getRepositoryName();
   }
 
   @Override
@@ -39,7 +41,9 @@ public class KVPackParser extends PackParser {
     super.parse(receiving, resolving);
 
     for (ObjectInfo info : objectsByPos.values()) {
-      objectService.insertPackedObject(ObjectId.fromString(info.objectId),
+      objectService.insertPackedObject(
+          repositoryName,
+          ObjectId.fromString(info.objectId),
           info.type,
           info.inflatedSize,
           info.totalSize,

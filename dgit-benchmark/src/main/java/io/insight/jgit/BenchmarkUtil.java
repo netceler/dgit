@@ -1,6 +1,10 @@
 package io.insight.jgit;
 
 
+import com.github.benmanes.caffeine.cache.stats.CacheStats;
+import io.insight.jgit.cache.CachedObjectService;
+import io.insight.jgit.cache.CachedRefService;
+import io.insight.jgit.cache.CachedRepoManager;
 import io.insight.jgit.jdbc.MysqlRepoManager;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
@@ -43,6 +47,19 @@ public class BenchmarkUtil implements RepositoryResolver<DaemonClient> {
 
   private MysqlRepoManager mysqlRepoManager =
       new MysqlRepoManager("jdbc:mysql://localhost:3306/test", "root", "lambdalab-dev");
+  private CachedRepoManager cachedRepoManager=new CachedRepoManager(mysqlRepoManager);
+
+  public void printCacheStats(){
+    CachedObjectService objService = cachedRepoManager.cacheLayer().objService();
+    CachedRefService refService = cachedRepoManager.cacheLayer().refService();
+    printRate("Ref cache ", refService.cacheStats());
+    printRate("object cache ", objService.objectCacheStats());
+    printRate("object data cache ", objService.dataCacheStats());
+  }
+
+  private static void printRate(String name, CacheStats refStats) {
+    System.out.println(String.format("%s %d/%d = %.1f %% ",name, refStats.hitCount(), refStats.requestCount(), refStats.hitRate()* 100));
+  }
 
   @Override
   public Repository open(DaemonClient req, String url) throws RepositoryNotFoundException,
@@ -72,10 +89,10 @@ public class BenchmarkUtil implements RepositoryResolver<DaemonClient> {
           return git.getRepository();
         }
       case "dgit":
-        if (mysqlRepoManager.exists(name)) {
-          return mysqlRepoManager.open(name);
+        if (cachedRepoManager.exists(name)) {
+          return cachedRepoManager.open(name);
         }
-        return mysqlRepoManager.create(name);
+        return cachedRepoManager.create(name);
     }
     return null;
   }

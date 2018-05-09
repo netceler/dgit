@@ -14,6 +14,7 @@ import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 
 public class KVObjectInserter extends ObjectInserter {
+  private final String repositoryName;
   private KVObjectDatabase objectDatabase;
   private KVObjectService objectService;
   private Deflater deflate;
@@ -22,6 +23,7 @@ public class KVObjectInserter extends ObjectInserter {
   KVObjectInserter(KVObjectDatabase objectDatabase, KVObjectService objectService) {
     this.objectDatabase = objectDatabase;
     this.objectService = objectService;
+    this.repositoryName = objectDatabase.getRepository().getRepositoryName();
   }
 
   @Override
@@ -37,7 +39,7 @@ public class KVObjectInserter extends ObjectInserter {
       compressOs.finish();
       byte[] compressedBuf = baos.toByteArray();
       ByteArrayInputStream in = new ByteArrayInputStream(compressedBuf, 0, compressedBuf.length);
-      objectService.insertLooseObject(id, objectType, length, in, compressedBuf.length);
+      objectService.insertLooseObject(repositoryName, id, objectType, length, in, compressedBuf.length);
       return id;
     } else {
       File tempFile = newTempFile();
@@ -58,7 +60,7 @@ public class KVObjectInserter extends ObjectInserter {
       cOut.finish();
       ObjectId id = md.toObjectId();
       fos.close();
-      FileInputStream fin = new FileInputStream(tempFile){
+      FileInputStream fin = new FileInputStream(tempFile) {
         @Override
         public void close() throws IOException {
           super.close();
@@ -66,7 +68,7 @@ public class KVObjectInserter extends ObjectInserter {
         }
       };
       long fileSize = fin.getChannel().size();
-      objectService.insertLooseObject(id, objectType, length, fin, fileSize);
+      objectService.insertLooseObject(repositoryName, id, objectType, length, fin, fileSize);
       return id;
     }
   }
@@ -112,7 +114,7 @@ public class KVObjectInserter extends ObjectInserter {
 
   @Override
   public ObjectReader newReader() {
-    return new KVObjectReader(objectService);
+    return new KVObjectReader(objectDatabase.getRepository(), objectService);
   }
 
   @Override

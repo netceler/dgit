@@ -45,7 +45,7 @@ public class KVRepository extends Repository {
 
   @Override
   public ObjectDatabase getObjectDatabase() {
-    KVObjectService service = manager.adapter().objService(getRepositoryName());
+    KVObjectService service = manager.adapter().objService();
     return new KVObjectDatabase(this, service);
   }
 
@@ -67,14 +67,14 @@ public class KVRepository extends Repository {
       config = new StoredConfig() {
         @Override
         public void load() throws IOException, ConfigInvalidException {
-          String cfgText = manager.adapter().loadConfig(getRepositoryName());
+          String cfgText = manager.adapter().configService().loadConfig(getRepositoryName());
           this.fromText(cfgText);
         }
 
         @Override
         public void save() throws IOException {
           String cfgText = this.toText();
-          manager.adapter().saveConfig(getRepositoryName(), cfgText);
+          manager.adapter().configService().saveConfig(getRepositoryName(), cfgText);
         }
       };
     }

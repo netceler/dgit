@@ -21,12 +21,12 @@ public class KVRefDatabase extends DfsRefDatabase {
   protected KVRefDatabase(KVRepository repo, KVAdapter adapter) {
     super(repo);
     repositoryName = repo.getRepositoryName();
-    this.refService = adapter.refService(repositoryName);
+    this.refService = adapter.refService();
   }
 
   @Override
   protected RefCache scanAllRefs() throws IOException {
-    Map<String, KVRef> all = refService.getAllRefs().stream().
+    Map<String, KVRef> all = refService.getAllRefs(repositoryName).stream().
         collect(Collectors.toMap(KVRef::getName, o -> o));
     RefList.Builder<Ref> ids = new RefList.Builder<>();
     RefList.Builder<Ref> sym = new RefList.Builder<>();
@@ -65,12 +65,12 @@ public class KVRefDatabase extends DfsRefDatabase {
 
   @Override
   protected boolean compareAndPut(Ref old, Ref newRef) throws IOException {
-    return refService.compareAndPut(old, newRef);
+    return refService.compareAndPut(repositoryName,old, newRef);
   }
 
   @Override
   protected boolean compareAndRemove(Ref old) throws IOException {
-    return refService.compareAndRemove(old);
+    return refService.compareAndRemove(repositoryName, old);
   }
 
 

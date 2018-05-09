@@ -13,11 +13,9 @@ import static io.insight.jgit.jdbc.jooq.Tables.GIT_REFS;
 
 public class JdbcRefService implements KVRefService {
   private JdbcAdapter jdbcAdapter;
-  private String repositoryName;
 
-  public JdbcRefService(JdbcAdapter jdbcAdapter, String repositoryName) {
+  public JdbcRefService(JdbcAdapter jdbcAdapter) {
     this.jdbcAdapter = jdbcAdapter;
-    this.repositoryName = repositoryName;
   }
 
   private KVRef toRef(GitRefsRecord rec) {
@@ -33,7 +31,7 @@ public class JdbcRefService implements KVRefService {
 
 
   @Override
-  public Collection<KVRef> getAllRefs() throws IOException {
+  public Collection<KVRef> getAllRefs(String repositoryName) throws IOException {
     return jdbcAdapter.withDSLContext(dsl ->
         dsl.select().from(GIT_REFS).where(GIT_REFS.REPO.equal(repositoryName))
             .fetch(r -> toRef(r.into(GIT_REFS))));
@@ -47,8 +45,8 @@ public class JdbcRefService implements KVRefService {
     } else if (expect.isSymbolic()) {
       return ref != null && ref.getSymbolic() == 1 && ref.getTarget().equals(expect.getTarget().getName());
     } else {
-      if(ref==null) return false;
-      String name = expect.getObjectId().name();
+      if(ref==null)
+        return false;
       if (ref.getObjectId() == null) {
         return expect.getObjectId() == null;
       } else {
@@ -58,7 +56,7 @@ public class JdbcRefService implements KVRefService {
   }
 
   @Override
-  public boolean compareAndPut(Ref old, Ref nw) throws IOException {
+  public boolean compareAndPut(String repositoryName, Ref old, Ref nw) throws IOException {
     return jdbcAdapter.withDSLContext(dsl -> dsl.transactionResult(configuration -> {
       GitRefsRecord rec = DSL.using(configuration).select().from(GIT_REFS)
           .where(GIT_REFS.REPO.eq(repositoryName).and(GIT_REFS.NAME.eq(old.getName()))).fetchOneInto(GIT_REFS);
@@ -82,7 +80,7 @@ public class JdbcRefService implements KVRefService {
 
 
   @Override
-  public boolean compareAndRemove(Ref old) throws IOException {
+  public boolean compareAndRemove(String repositoryName, Ref old) throws IOException {
     return jdbcAdapter.withDSLContext(dsl -> dsl.transactionResult(configuration -> {
       GitRefsRecord rec = DSL.using(configuration).select().from(GIT_REFS)
           .where(GIT_REFS.REPO.eq(repositoryName).and(GIT_REFS.NAME.eq(old.getName()))).fetchOneInto(GIT_REFS);

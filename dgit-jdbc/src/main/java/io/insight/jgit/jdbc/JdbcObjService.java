@@ -22,35 +22,33 @@ import static io.insight.jgit.jdbc.jooq.Tables.GIT_OBJECTS;
 
 public class JdbcObjService implements KVObjectService {
   private final JdbcAdapter jdbcAdapter;
-  private final String repositoryName;
 
-  public JdbcObjService(JdbcAdapter jdbcAdapter, String repositoryName) {
+  public JdbcObjService(JdbcAdapter jdbcAdapter) {
     this.jdbcAdapter = jdbcAdapter;
-    this.repositoryName = repositoryName;
   }
 
   @Override
-  public Collection<ObjectId> resolve(String name) throws IOException {
+  public Collection<ObjectId> resolve(String repositoryName,String name) throws IOException {
     return jdbcAdapter.withDSLContext(dsl -> dsl.select(GIT_OBJECTS.OBJECT_ID).from(GIT_OBJECTS)
         .where(GIT_OBJECTS.REPO.equal(repositoryName).and(GIT_OBJECTS.OBJECT_ID.like(name + "%")))
         .fetch(GIT_OBJECTS.OBJECT_ID).stream().map(ObjectId::fromString).collect(Collectors.toList()));
   }
 
   @Override
-  public void insertLooseObject(AnyObjectId objectId, int objectType, long inflatedSize, InputStream in, long length)
+  public void insertLooseObject(String repositoryName,AnyObjectId objectId, int objectType, long inflatedSize, InputStream in, long length)
       throws IOException {
     jdbcAdapter.withDSLContext(dsl -> {
-      insertObject(objectId, objectType, inflatedSize, inflatedSize,null, in, length, dsl);
+      insertObject(repositoryName, objectId, objectType, inflatedSize, inflatedSize,null, in, length, dsl);
       return null;
     });
   }
 
   @Override
-  public KVObject loadObject(AnyObjectId objectId) throws IOException {
-    return jdbcAdapter.withDSLContext(dsl -> getKvObject(objectId.name(), dsl));
+  public KVObject loadObject(String repositoryName, AnyObjectId objectId) throws IOException {
+    return jdbcAdapter.withDSLContext(dsl -> getKvObject(repositoryName, objectId.name(), dsl));
   }
 
-  private KVObject getKvObject(String objectId, DSLContext dsl) {
+  private KVObject getKvObject(String repositoryName, String objectId, DSLContext dsl) {
     GitObjectsRecord rec = dsl.select(
         GIT_OBJECTS.OBJECT_ID, GIT_OBJECTS.TYPE, GIT_OBJECTS.SIZE, GIT_OBJECTS.BASE, GIT_OBJECTS.TOTAL_SIZE
     ).from(GIT_OBJECTS)
@@ -60,13 +58,13 @@ public class JdbcObjService implements KVObjectService {
     long totalSize = rec.getTotalSize() != null ? rec.getTotalSize() : rec.getSize();
     KVObject obj = new KVObject(rec.getObjectId(), rec.getType(), rec.getSize(), totalSize);
     if (rec.getBase() != null) {
-      obj.setBase(getKvObject(rec.getBase(), dsl));
+      obj.setBase(getKvObject(repositoryName, rec.getBase(), dsl));
     }
     return obj;
   }
 
   @Override
-  public byte[] getObjectData(AnyObjectId objectId) throws IOException {
+  public byte[] getObjectData(String repositoryName, AnyObjectId objectId) throws IOException {
     return jdbcAdapter.withDSLContext(dsl ->
         dsl.select(GIT_OBJECTS.DATA).from(GIT_OBJECTS)
             .where(GIT_OBJECTS.REPO.eq(repositoryName).and(GIT_OBJECTS.OBJECT_ID.eq(objectId.name())))
@@ -74,7 +72,7 @@ public class JdbcObjService implements KVObjectService {
   }
 
   @Override
-  public void insertPackedObject(AnyObjectId objectId,
+  public void insertPackedObject(String repositoryName,  AnyObjectId objectId,
                                  int objectType,
                                  long inflatedSize,
                                  long totalSize,
@@ -86,13 +84,14 @@ public class JdbcObjService implements KVObjectService {
       dsl.transaction(configuration -> {
         channel.position(offset);
         InputStream in = Channels.newInputStream(channel);
-        insertObject(objectId, objectType, inflatedSize,totalSize, base, in, size, dsl);
+        insertObject(repositoryName ,objectId, objectType, inflatedSize,totalSize, base, in, size, dsl);
       });
       return null;
     });
   }
 
-  private void insertObject(AnyObjectId objectId,
+  private void insertObject(String repositoryName,
+                            AnyObjectId objectId,
                             int objectType,
                             long inflatedSize,
                             long totalSize,

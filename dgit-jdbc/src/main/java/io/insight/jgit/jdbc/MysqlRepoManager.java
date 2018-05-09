@@ -2,6 +2,7 @@ package io.insight.jgit.jdbc;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import io.insight.jgit.services.KVAdapter;
 import org.jooq.SQLDialect;
 
 import javax.sql.DataSource;
@@ -11,6 +12,7 @@ import java.sql.SQLException;
 public class MysqlRepoManager extends JdbcRepoManager {
 
   private final DataSource ds;
+  public MysqlJdbcAdapter jdbcAdapter;
 
   public MysqlRepoManager(String jdbcUrl, String user, String password) {
     HikariConfig config = new HikariConfig();
@@ -26,7 +28,10 @@ public class MysqlRepoManager extends JdbcRepoManager {
 
   @Override
   public JdbcAdapter adapter() {
-    return new MysqlJdbcAdapter();
+    if (jdbcAdapter == null) {
+      jdbcAdapter = new MysqlJdbcAdapter();
+    }
+    return jdbcAdapter;
   }
 
   private class MysqlJdbcAdapter extends JdbcAdapter {

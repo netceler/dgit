@@ -88,13 +88,12 @@ public class ReadFileBenchmark {
             }
             treeWalk.close();
         }
-        System.gc();
     }
 
     @TearDown
     public void teardown() {
         util.stopDaemon();
-
+        util.printCacheStats();
     }
 
     private Random r=new Random();
@@ -133,9 +132,12 @@ public class ReadFileBenchmark {
         p.engine = "dgit";
         p.repoName = "MEDIUM";
         p.setup();
-        String content = p.readFile();
-        System.out.println("content = " + content);
-        System.out.println("content = " + p.readFile());
+
+        for (int i =0; i< 100; i++) {
+            p.readFile();
+        }
+
         p.teardown();
+
     }
 }

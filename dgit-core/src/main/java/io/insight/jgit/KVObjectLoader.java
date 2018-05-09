@@ -18,11 +18,13 @@ import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 public class KVObjectLoader extends ObjectLoader {
+  private String repositoryName;
   private final KVObject object;
   private final KVObjectService objectService;
   private byte[] cached;
 
-  KVObjectLoader(KVObject object, KVObjectService objectService) {
+  KVObjectLoader(String repositoryName, KVObject object, KVObjectService objectService) {
+    this.repositoryName = repositoryName;
     this.object = object;
     this.objectService = objectService;
   }
@@ -97,6 +99,6 @@ public class KVObjectLoader extends ObjectLoader {
   }
 
   private byte[] getObjectData(String objectId) throws IOException {
-    return objectService.getObjectData(ObjectId.fromString(objectId));
+    return objectService.getObjectData(repositoryName, ObjectId.fromString(objectId));
   }
 }

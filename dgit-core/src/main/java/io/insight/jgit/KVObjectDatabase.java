@@ -24,7 +24,7 @@ public class KVObjectDatabase extends ObjectDatabase {
 
   @Override
   public ObjectReader newReader() {
-    return new KVObjectReader(kvObjectService);
+    return new KVObjectReader(repository,kvObjectService);
   }
 
   @Override
@@ -34,5 +34,9 @@ public class KVObjectDatabase extends ObjectDatabase {
 
   public Config getConfig() {
     return repository.getConfig();
+  }
+
+  public KVRepository getRepository() {
+    return repository;
   }
 }
