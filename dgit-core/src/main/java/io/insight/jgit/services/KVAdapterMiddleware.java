@@ -1,11 +1,10 @@
 package io.insight.jgit.services;
 
 public interface KVAdapterMiddleware {
-  KVConfigServiceMiddleware configService();
 
+    <CachedConfigService> CachedConfigService configService();
 
-  KVRefServiceMiddleware refService();
+    <KVRefServiceMiddleware> KVRefServiceMiddleware refService();
 
-
-  KVObjectServiceMiddleware objService();
+    <KVObjectServiceMiddleware> KVObjectServiceMiddleware objService();
 }

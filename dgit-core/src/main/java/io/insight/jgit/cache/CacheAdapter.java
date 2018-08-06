@@ -4,47 +4,54 @@ import io.insight.jgit.services.KVAdapterMiddleware;
 
 public class CacheAdapter implements KVAdapterMiddleware {
 
-  private final int configCacheSize;
-  private final int refCacheSize;
-  private final int objCacheSize;
+    private final int configCacheSize;
 
-  public CacheAdapter(int configCacheSize, int refCacheSize, int objCacheSize) {
-    this.configCacheSize = configCacheSize;
-    this.refCacheSize = refCacheSize;
-    this.objCacheSize = objCacheSize;
-  }
+    private final int refCacheSize;
 
-  private CachedConfigService configService;
+    private final int objCacheSize;
 
-  public CachedConfigService configService() {
-    if (configService == null) {
-      configService = new CachedConfigService(configCacheSize);
+    public CacheAdapter(final int configCacheSize, final int refCacheSize, final int objCacheSize) {
+        this.configCacheSize = configCacheSize;
+        this.refCacheSize = refCacheSize;
+        this.objCacheSize = objCacheSize;
     }
-    return configService;
-  }
 
-  private CachedRefService refService;
+    private CachedConfigService configService;
 
-  static void checkInvocation(Object invocation) {
-    if (invocation == null) {
-      throw new IllegalStateException("missing adapter");
+    @Override
+    @SuppressWarnings("unchecked")
+    public CachedConfigService configService() {
+        if (configService == null) {
+            configService = new CachedConfigService(configCacheSize);
+        }
+        return configService;
     }
-  }
 
-  public CachedRefService refService() {
-    if (refService == null) {
-      refService = new CachedRefService(refCacheSize);
+    private CachedRefService refService;
+
+    static void checkInvocation(final Object invocation) {
+        if (invocation == null) {
+            throw new IllegalStateException("missing adapter");
+        }
     }
-    return refService;
-  }
 
-  private CachedObjectService objService;
-
-  public CachedObjectService objService() {
-    if (objService == null) {
-      objService = new CachedObjectService(objCacheSize);
+    @Override
+    @SuppressWarnings("unchecked")
+    public CachedRefService refService() {
+        if (refService == null) {
+            refService = new CachedRefService(refCacheSize);
+        }
+        return refService;
     }
-    return objService;
-  }
 
+    private CachedObjectService objService;
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public CachedObjectService objService() {
+        if (objService == null) {
+            objService = new CachedObjectService(objCacheSize);
+        }
+        return objService;
+    }
 }

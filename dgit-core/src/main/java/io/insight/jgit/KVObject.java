@@ -1,48 +1,45 @@
 package io.insight.jgit;
 
-import io.insight.jgit.services.KVObjectService;
-import org.eclipse.jgit.internal.storage.pack.BinaryDelta;
-import org.eclipse.jgit.lib.ObjectId;
-
-import java.io.IOException;
-
 public class KVObject {
-  private final String objectId;
-  private final int type;
-  private final long size;
-  private long totalSize;
-  private KVObject base;
+    private final String objectId;
 
-  public KVObject(String objectId, int type, long size, long totalSize) {
-    this.objectId = objectId;
-    this.type = type;
-    this.size = size;
-    this.totalSize = totalSize;
-  }
+    private final int type;
 
-  public String getObjectId() {
-    return objectId;
-  }
+    private final long size;
 
+    private final long totalSize;
 
-  public int getType() {
-    return type;
-  }
+    private KVObject base;
 
-  public long getSize() {
-    return size;
-  }
+    public KVObject(final String objectId, final int type, final long size, final long totalSize) {
+        this.objectId = objectId;
+        this.type = type;
+        this.size = size;
+        this.totalSize = totalSize;
 
-  public long getTotalSize() {
-    return totalSize;
-  }
+    }
 
-  public KVObject getBase() {
-    return base;
-  }
+    public String getObjectId() {
+        return objectId;
+    }
 
-  public void setBase(KVObject base) {
-    this.base = base;
-  }
+    public int getType() {
+        return type;
+    }
 
+    public long getSize() {
+        return size;
+    }
+
+    public long getTotalSize() {
+        return totalSize;
+    }
+
+    public KVObject getBase() {
+        return base;
+    }
+
+    public void setBase(final KVObject base) {
+        this.base = base;
+    }
 }

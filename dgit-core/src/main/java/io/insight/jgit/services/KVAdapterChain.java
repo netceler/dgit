@@ -2,22 +2,24 @@ package io.insight.jgit.services;
 
 public class KVAdapterChain implements KVAdapter {
 
-  private KVConfigServiceChain kvConfigServiceChain = new KVConfigServiceChain();
-  private KVRefServiceChain kvRefServiceChain = new KVRefServiceChain();
-  private KVObjectServiceChain kvObjectServiceChain  = new KVObjectServiceChain();
+    private final KVConfigServiceChain kvConfigServiceChain = new KVConfigServiceChain();
 
-  @Override
-  public KVConfigServiceChain configService() {
-    return kvConfigServiceChain;
-  }
+    private final KVRefServiceChain kvRefServiceChain = new KVRefServiceChain();
 
-  @Override
-  public KVRefServiceChain refService() {
-    return kvRefServiceChain;
-  }
+    private final KVObjectServiceChain kvObjectServiceChain = new KVObjectServiceChain();
 
-  @Override
-  public KVObjectServiceChain objService() {
-    return kvObjectServiceChain;
-  }
+    @Override
+    public KVConfigServiceChain configService() {
+        return kvConfigServiceChain;
+    }
+
+    @Override
+    public KVRefServiceChain refService() {
+        return kvRefServiceChain;
+    }
+
+    @Override
+    public KVObjectServiceChain objService() {
+        return kvObjectServiceChain;
+    }
 }

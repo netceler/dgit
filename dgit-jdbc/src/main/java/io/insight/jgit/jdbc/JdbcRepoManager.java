@@ -1,38 +1,49 @@
 package io.insight.jgit.jdbc;
 
-import io.insight.jgit.KVRepoManager;
+import static io.insight.jgit.jdbc.jooq.Tables.GIT_CONFIG;
+import static io.insight.jgit.jdbc.jooq.Tables.GIT_OBJECTS;
+import static io.insight.jgit.jdbc.jooq.Tables.GIT_REFS;
+
 import org.eclipse.jgit.lib.Repository;
+import org.jooq.impl.DSL;
 
 import java.io.IOException;
 
-import static io.insight.jgit.jdbc.jooq.Tables.*;
+import io.insight.jgit.KVRepoManager;
 
 public abstract class JdbcRepoManager implements KVRepoManager {
 
-  @Override
-  public boolean exists(String name) throws IOException {
-    return adapter().withDSLContext(dsl ->
-        dsl.select(GIT_REFS.NAME).from(GIT_REFS).where(GIT_REFS.REPO.eq(name)).fetchAny() != null);
-  }
+    @Override
+    public boolean exists(final String name) throws IOException {
+        if (!tableExists()) {
+            return false;
+        }
+        return adapter().withDSLContext(dsl -> dsl.select(GIT_REFS.NAME).from(GIT_REFS).where(
+                GIT_REFS.REPO.eq(name)).fetchAny() != null);
+    }
 
-  @Override
-  public Repository create(String name) throws IOException {
-    Repository repo = open(name);
-    repo.create();
-    return repo;
-  }
+    private boolean tableExists() throws IOException {
+        return adapter().withDSLContext(dsl -> dsl.select(DSL.field("tablename")).from("pg_tables").where(
+                DSL.field("tablename").eq("git_refs")).fetchAny() != null);
+    }
 
-  @Override
-  public void delete(String name) throws IOException {
-    adapter().withDSLContext(dsl -> {
-      dsl.deleteFrom(GIT_REFS).where(GIT_REFS.REPO.eq(name)).execute();
-      dsl.deleteFrom(GIT_CONFIG).where(GIT_CONFIG.REPO.eq(name)).execute();
-      dsl.deleteFrom(GIT_OBJECTS).where(GIT_OBJECTS.REPO.eq(name)).execute();
-      return null;
-    });
-  }
+    @Override
+    public Repository create(final String name) throws IOException {
+        final Repository repo = open(name);
+        repo.create();
+        return repo;
+    }
 
+    @Override
+    public void delete(final String name) throws IOException {
+        adapter().withDSLContext(dsl -> {
+            dsl.deleteFrom(GIT_REFS).where(GIT_REFS.REPO.eq(name)).execute();
+            dsl.deleteFrom(GIT_CONFIG).where(GIT_CONFIG.REPO.eq(name)).execute();
+            dsl.deleteFrom(GIT_OBJECTS).where(GIT_OBJECTS.REPO.eq(name)).execute();
+            return null;
+        });
+    }
 
-  public abstract JdbcAdapter adapter();
- 
+    @Override
+    public abstract JdbcAdapter adapter();
 }

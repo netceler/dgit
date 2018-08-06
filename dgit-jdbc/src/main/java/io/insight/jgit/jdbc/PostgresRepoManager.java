@@ -10,13 +10,13 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
-public class MysqlRepoManager extends JdbcRepoManager {
+public class PostgresRepoManager extends JdbcRepoManager {
 
     private final DataSource ds;
 
-    public MysqlJdbcAdapter jdbcAdapter;
+    public PostgresJdbcAdapter jdbcAdapter;
 
-    public MysqlRepoManager(final String jdbcUrl, final String user, final String password) {
+    public PostgresRepoManager(final String jdbcUrl, final String user, final String password) {
         final HikariConfig config = new HikariConfig();
         config.setJdbcUrl(jdbcUrl);
         config.setUsername(user);
@@ -24,22 +24,22 @@ public class MysqlRepoManager extends JdbcRepoManager {
         ds = new HikariDataSource(config);
     }
 
-    public MysqlRepoManager(final DataSource ds) {
+    public PostgresRepoManager(final DataSource ds) {
         this.ds = ds;
     }
 
     @Override
     public JdbcAdapter adapter() {
         if (jdbcAdapter == null) {
-            jdbcAdapter = new MysqlJdbcAdapter();
+            jdbcAdapter = new PostgresJdbcAdapter();
         }
         return jdbcAdapter;
     }
 
-    private class MysqlJdbcAdapter extends JdbcAdapter {
+    private class PostgresJdbcAdapter extends JdbcAdapter {
         @Override
         SQLDialect dialect() {
-            return SQLDialect.MYSQL;
+            return SQLDialect.POSTGRES;
         }
 
         @Override

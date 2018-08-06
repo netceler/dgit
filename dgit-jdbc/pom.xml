@@ -5,7 +5,7 @@
     <parent>
         <artifactId>dgit</artifactId>
         <groupId>io.insight.git</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -14,7 +14,7 @@
         <dependency>
             <groupId>io.insight.git</groupId>
             <artifactId>dgit-core</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>org.jooq</groupId>
@@ -60,46 +60,5 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.jooq</groupId>
-                <artifactId>jooq-codegen-maven</artifactId>
-                <version>3.10.6</version>
-
-                <executions>
-                    <execution>
-                        <id>jooq-codegen</id>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <!-- JDBC connection parameters -->
-                            <jdbc>
-                                <driver>com.mysql.jdbc.Driver</driver>
-                                <url>jdbc:mysql://localhost:3306/test</url>
-                                <user>root</user>
-                                <password>lambdalab-dev</password>
-                            </jdbc>
-
-                            <!-- Generator parameters -->
-                            <generator>
-                                <database>
-                                    <name>org.jooq.util.mysql.MySQLDatabase</name>
-                                    <includes>.*</includes>
-                                    <excludes/>
-                                    <inputSchema>test</inputSchema>
-                                </database>
-                                <target>
-                                    <packageName>io.insight.jgit.jdbc.jooq</packageName>
-                                    <directory>src/main/generated</directory>
-                                </target>
-                            </generator>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
     
 </project>
