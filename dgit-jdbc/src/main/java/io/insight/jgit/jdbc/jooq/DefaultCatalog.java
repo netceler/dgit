@@ -3,12 +3,7 @@
  */
 package io.insight.jgit.jdbc.jooq;
 
-import org.jooq.Schema;
 import org.jooq.impl.CatalogImpl;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import javax.annotation.Generated;
 
@@ -28,25 +23,9 @@ public class DefaultCatalog extends CatalogImpl {
     public static final DefaultCatalog DEFAULT_CATALOG = new DefaultCatalog();
 
     /**
-     * The schema <code>test</code>.
-     */
-    public final Test TEST = io.insight.jgit.jdbc.jooq.Test.TEST;
-
-    /**
      * No further instances allowed
      */
     private DefaultCatalog() {
         super("");
-    }
-
-    @Override
-    public final List<Schema> getSchemas() {
-        final List result = new ArrayList();
-        result.addAll(getSchemas0());
-        return result;
-    }
-
-    private final List<Schema> getSchemas0() {
-        return Arrays.<Schema> asList(Test.TEST);
     }
 }

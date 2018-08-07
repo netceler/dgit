@@ -33,10 +33,10 @@ public class Indexes {
     // -------------------------------------------------------------------------
 
     private static class Indexes0 {
-        public static Index GIT_CONFIG_PRIMARY = Internal.createIndex("PRIMARY", GitConfig.GIT_CONFIG,
-                new OrderField[] { GitConfig.GIT_CONFIG.REPO }, true);
+        public static Index GIT_CONFIG_PRIMARY = Internal.createIndex("INDEX_git_config_PRIMARY",
+                GitConfig.GIT_CONFIG, new OrderField[] { GitConfig.GIT_CONFIG.REPO }, true);
 
-        public static Index GIT_REFS_PRIMARY = Internal.createIndex("PRIMARY", GitRefs.GIT_REFS,
-                new OrderField[] { GitRefs.GIT_REFS.REPO, GitRefs.GIT_REFS.NAME }, true);
+        public static Index GIT_REFS_PRIMARY = Internal.createIndex("INDEX_git_refs_PRIMARY",
+                GitRefs.GIT_REFS, new OrderField[] { GitRefs.GIT_REFS.REPO, GitRefs.GIT_REFS.NAME }, true);
     }
 }
