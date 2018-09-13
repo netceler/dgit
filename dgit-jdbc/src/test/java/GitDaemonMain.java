@@ -3,12 +3,12 @@ import org.eclipse.jgit.transport.Daemon;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import io.insight.jgit.jdbc.MysqlRepoManager;
+import io.insight.jgit.jdbc.SqlRepoManager;
 
 public class GitDaemonMain {
     public static void main(final String[] args) throws IOException {
 
-        final MysqlRepoManager repoManager = new MysqlRepoManager("jdbc:mysql://localhost:3306/test", "root",
+        final SqlRepoManager repoManager = new SqlRepoManager("jdbc:mysql://localhost:3306/test", "root",
                 "lambdalab-dev");
 
         final Daemon gitDeamon = new Daemon(new InetSocketAddress(Daemon.DEFAULT_PORT));

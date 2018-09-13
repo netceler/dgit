@@ -10,6 +10,7 @@ import org.jooq.impl.Internal;
 import javax.annotation.Generated;
 
 import io.insight.jgit.jdbc.jooq.tables.GitConfig;
+import io.insight.jgit.jdbc.jooq.tables.GitObjects;
 import io.insight.jgit.jdbc.jooq.tables.GitRefs;
 
 /**
@@ -28,6 +29,8 @@ public class Indexes {
 
     public static final Index GIT_REFS_PRIMARY = Indexes0.GIT_REFS_PRIMARY;
 
+    public static final Index GIT_OBJECTS_PRIMARY = Indexes0.GIT_OBJECTS_PRIMARY;
+
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
     // -------------------------------------------------------------------------
@@ -38,5 +41,9 @@ public class Indexes {
 
         public static Index GIT_REFS_PRIMARY = Internal.createIndex("INDEX_git_refs_PRIMARY",
                 GitRefs.GIT_REFS, new OrderField[] { GitRefs.GIT_REFS.REPO, GitRefs.GIT_REFS.NAME }, true);
+
+        public static Index GIT_OBJECTS_PRIMARY = Internal.createIndex("INDEX_git_objects_PRIMARY",
+                GitObjects.GIT_OBJECTS,
+                new OrderField[] { GitObjects.GIT_OBJECTS.REPO, GitObjects.GIT_OBJECTS.OBJECT_ID }, true);
     }
 }

@@ -15,7 +15,7 @@ import io.insight.jgit.services.KVRefService;
 
 public abstract class JdbcAdapter implements KVAdapter {
 
-    abstract SQLDialect dialect();
+    protected abstract SQLDialect dialect();
 
     protected <R> R withDSLContext(final ContextFunc<R> func) throws IOException {
         return withConnection(conn -> {

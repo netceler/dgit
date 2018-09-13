@@ -30,10 +30,10 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 
-import io.insight.jgit.jdbc.MysqlRepoManager;
+import io.insight.jgit.jdbc.SqlRepoManager;
 
 public class GitCommandTest {
-    private MysqlRepoManager repoManager;
+    private SqlRepoManager repoManager;
 
     File baseDir = new File("/tmp");
 
@@ -46,7 +46,7 @@ public class GitCommandTest {
     @Before
     public void setUp() throws Exception {
 
-        repoManager = new MysqlRepoManager("jdbc:mysql://localhost:3306/test", "root", "lambdalab-dev");
+        repoManager = new SqlRepoManager("jdbc:mysql://localhost:3306/test", "root", "lambdalab-dev");
         if (repoManager.exists(repoName)) {
             repoManager.delete(repoName);
         }

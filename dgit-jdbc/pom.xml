@@ -16,20 +16,20 @@
             <artifactId>dgit-core</artifactId>
             <version>1.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.jooq</groupId>
+         <dependency>
+            <groupId>org.jooq.trial</groupId>
             <artifactId>jooq</artifactId>
-            <version>3.10.6</version>
+            <version>3.11.4</version>
         </dependency>
         <dependency>
-            <groupId>org.jooq</groupId>
+            <groupId>org.jooq.trial</groupId>
             <artifactId>jooq-meta</artifactId>
-            <version>3.10.6</version>
+            <version>3.11.4</version>
         </dependency>
         <dependency>
-            <groupId>org.jooq</groupId>
+            <groupId>org.jooq.trial</groupId>
             <artifactId>jooq-codegen</artifactId>
-            <version>3.10.6</version>
+            <version>3.11.4</version>
         </dependency>
         <dependency>
             <groupId>mysql</groupId>

@@ -5,7 +5,6 @@ import static io.insight.jgit.jdbc.jooq.Tables.GIT_OBJECTS;
 import static io.insight.jgit.jdbc.jooq.Tables.GIT_REFS;
 
 import org.eclipse.jgit.lib.Repository;
-import org.jooq.impl.DSL;
 
 import java.io.IOException;
 
@@ -23,8 +22,12 @@ public abstract class JdbcRepoManager implements KVRepoManager {
     }
 
     private boolean tableExists() throws IOException {
-        return adapter().withDSLContext(dsl -> dsl.select(DSL.field("tablename")).from("pg_tables").where(
-                DSL.field("tablename").eq("git_refs")).fetchAny() != null);
+        try {
+            adapter().withDSLContext(dsl -> dsl.selectCount().from(GIT_REFS));
+            return true;
+        } catch (final Exception e) {
+            return false;
+        }
     }
 
     @Override

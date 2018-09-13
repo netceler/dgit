@@ -32,7 +32,7 @@ public class GitConfig extends TableImpl<GitConfigRecord> {
     private static final long serialVersionUID = -1189670840;
 
     /**
-     * The reference instance of <code>test.git_config</code>
+     * The reference instance of <code>GIT_CONFIG</code>
      */
     public static final GitConfig GIT_CONFIG = new GitConfig();
 
@@ -45,35 +45,35 @@ public class GitConfig extends TableImpl<GitConfigRecord> {
     }
 
     /**
-     * The column <code>test.git_config.repo</code>.
+     * The column <code>GIT_CONFIG.REPO</code>.
      */
-    public final TableField<GitConfigRecord, String> REPO = createField("repo",
+    public final TableField<GitConfigRecord, String> REPO = createField("REPO",
             org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false).defaultValue(
                     org.jooq.impl.DSL.inline("", org.jooq.impl.SQLDataType.VARCHAR)),
             this, "");
 
     /**
-     * The column <code>test.git_config.config</code>.
+     * The column <code>GIT_CONFIG.CONFIG</code>.
      */
-    public final TableField<GitConfigRecord, String> CONFIG = createField("config",
+    public final TableField<GitConfigRecord, String> CONFIG = createField("CONFIG",
             org.jooq.impl.SQLDataType.CLOB, this, "");
 
     /**
-     * Create a <code>test.git_config</code> table reference
+     * Create a <code>GIT_CONFIG</code> table reference
      */
     public GitConfig() {
-        this(DSL.name("git_config"), null);
+        this(DSL.name("GIT_CONFIG"), null);
     }
 
     /**
-     * Create an aliased <code>test.git_config</code> table reference
+     * Create an aliased <code>GIT_CONFIG</code> table reference
      */
     public GitConfig(final String alias) {
         this(DSL.name(alias), GIT_CONFIG);
     }
 
     /**
-     * Create an aliased <code>test.git_config</code> table reference
+     * Create an aliased <code>GIT_CONFIG</code> table reference
      */
     public GitConfig(final Name alias) {
         this(alias, GIT_CONFIG);

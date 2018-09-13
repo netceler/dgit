@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 
 import io.insight.jgit.KVRepoManager;
 import io.insight.jgit.cache.CachedRepoManager;
-import io.insight.jgit.jdbc.MysqlRepoManager;
+import io.insight.jgit.jdbc.SqlRepoManager;
 
 public class JdbcRepoTest {
 
@@ -49,7 +49,7 @@ public class JdbcRepoTest {
     @Before
     public void setUp() throws Exception {
 
-        repoManager = new MysqlRepoManager("jdbc:mysql://localhost:3306/test", "root", "lambdalab-dev");
+        repoManager = new SqlRepoManager("jdbc:mysql://localhost:3306/test", "root", "lambdalab-dev");
         repoManager = new CachedRepoManager(repoManager);
         if (repoManager.exists(repoName)) {
             repoManager.delete(repoName);

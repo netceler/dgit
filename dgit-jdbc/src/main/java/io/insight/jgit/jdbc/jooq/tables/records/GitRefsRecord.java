@@ -25,84 +25,84 @@ public class GitRefsRecord extends UpdatableRecordImpl<GitRefsRecord>
     private static final long serialVersionUID = 1762363317;
 
     /**
-     * Setter for <code>test.git_refs.repo</code>.
+     * Setter for <code>GIT_REFS.REPO</code>.
      */
     public void setRepo(final String value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>test.git_refs.repo</code>.
+     * Getter for <code>GIT_REFS.REPO</code>.
      */
     public String getRepo() {
         return (String) get(0);
     }
 
     /**
-     * Setter for <code>test.git_refs.name</code>.
+     * Setter for <code>GIT_REFS.NAME</code>.
      */
     public void setName(final String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>test.git_refs.name</code>.
+     * Getter for <code>GIT_REFS.NAME</code>.
      */
     public String getName() {
         return (String) get(1);
     }
 
     /**
-     * Setter for <code>test.git_refs.symbolic</code>.
+     * Setter for <code>GIT_REFS.SYMBOLIC</code>.
      */
     public void setSymbolic(final Byte value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>test.git_refs.symbolic</code>.
+     * Getter for <code>GIT_REFS.SYMBOLIC</code>.
      */
     public Byte getSymbolic() {
         return (Byte) get(2);
     }
 
     /**
-     * Setter for <code>test.git_refs.target</code>.
+     * Setter for <code>GIT_REFS.TARGET</code>.
      */
     public void setTarget(final String value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>test.git_refs.target</code>.
+     * Getter for <code>GIT_REFS.TARGET</code>.
      */
     public String getTarget() {
         return (String) get(3);
     }
 
     /**
-     * Setter for <code>test.git_refs.storage</code>.
+     * Setter for <code>GIT_REFS.STORAGE</code>.
      */
     public void setStorage(final String value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>test.git_refs.storage</code>.
+     * Getter for <code>GIT_REFS.STORAGE</code>.
      */
     public String getStorage() {
         return (String) get(4);
     }
 
     /**
-     * Setter for <code>test.git_refs.object_id</code>.
+     * Setter for <code>GIT_REFS.OBJECT_ID</code>.
      */
     public void setObjectId(final String value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>test.git_refs.object_id</code>.
+     * Getter for <code>GIT_REFS.OBJECT_ID</code>.
      */
     public String getObjectId() {
         return (String) get(5);

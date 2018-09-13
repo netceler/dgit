@@ -4,14 +4,21 @@
 package io.insight.jgit.jdbc.jooq.tables;
 
 import org.jooq.Field;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.annotation.Generated;
 
+import io.insight.jgit.jdbc.jooq.Indexes;
+import io.insight.jgit.jdbc.jooq.Keys;
 import io.insight.jgit.jdbc.jooq.tables.records.GitObjectsRecord;
 
 /**
@@ -25,7 +32,7 @@ public class GitObjects extends TableImpl<GitObjectsRecord> {
     private static final long serialVersionUID = -1408287752;
 
     /**
-     * The reference instance of <code>test.git_objects</code>
+     * The reference instance of <code>GIT_OBJECTS</code>
      */
     public static final GitObjects GIT_OBJECTS = new GitObjects();
 
@@ -38,65 +45,65 @@ public class GitObjects extends TableImpl<GitObjectsRecord> {
     }
 
     /**
-     * The column <code>test.git_objects.repo</code>.
+     * The column <code>GIT_OBJECTS.REPO</code>.
      */
-    public final TableField<GitObjectsRecord, String> REPO = createField("repo",
+    public final TableField<GitObjectsRecord, String> REPO = createField("REPO",
             org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false).defaultValue(
                     org.jooq.impl.DSL.inline("", org.jooq.impl.SQLDataType.VARCHAR)),
             this, "");
 
     /**
-     * The column <code>test.git_objects.object_id</code>.
+     * The column <code>GIT_OBJECTS.OBJECT_ID</code>.
      */
-    public final TableField<GitObjectsRecord, String> OBJECT_ID = createField("object_id",
+    public final TableField<GitObjectsRecord, String> OBJECT_ID = createField("OBJECT_ID",
             org.jooq.impl.SQLDataType.CHAR(40), this, "");
 
     /**
-     * The column <code>test.git_objects.type</code>.
+     * The column <code>GIT_OBJECTS.TYPE</code>.
      */
-    public final TableField<GitObjectsRecord, Integer> TYPE = createField("type",
+    public final TableField<GitObjectsRecord, Integer> TYPE = createField("TYPE",
             org.jooq.impl.SQLDataType.INTEGER, this, "");
 
     /**
-     * The column <code>test.git_objects.data</code>.
+     * The column <code>GIT_OBJECTS.DATA</code>.
      */
-    public final TableField<GitObjectsRecord, byte[]> DATA = createField("data",
+    public final TableField<GitObjectsRecord, byte[]> DATA = createField("DATA",
             org.jooq.impl.SQLDataType.BLOB, this, "");
 
     /**
-     * The column <code>test.git_objects.base</code>.
+     * The column <code>GIT_OBJECTS.BASE</code>.
      */
-    public final TableField<GitObjectsRecord, String> BASE = createField("base",
+    public final TableField<GitObjectsRecord, String> BASE = createField("BASE",
             org.jooq.impl.SQLDataType.CHAR(40), this, "");
 
     /**
-     * The column <code>test.git_objects.size</code>.
+     * The column <code>GIT_OBJECTS.SIZE</code>.
      */
-    public final TableField<GitObjectsRecord, Long> SIZE = createField("size",
+    public final TableField<GitObjectsRecord, Long> SIZE = createField("SIZE",
             org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>test.git_objects.total_size</code>.
+     * The column <code>GIT_OBJECTS.TOTAL_SIZE</code>.
      */
-    public final TableField<GitObjectsRecord, Long> TOTAL_SIZE = createField("total_size",
+    public final TableField<GitObjectsRecord, Long> TOTAL_SIZE = createField("TOTAL_SIZE",
             org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
-     * Create a <code>test.git_objects</code> table reference
+     * Create a <code>GIT_OBJECTS</code> table reference
      */
     public GitObjects() {
-        this(DSL.name("git_objects"), null);
+        this(DSL.name("GIT_OBJECTS"), null);
     }
 
     /**
-     * Create an aliased <code>test.git_objects</code> table reference
+     * Create an aliased <code>GIT_OBJECTS</code> table reference
      */
     public GitObjects(final String alias) {
         this(DSL.name(alias), GIT_OBJECTS);
     }
 
     /**
-     * Create an aliased <code>test.git_objects</code> table reference
+     * Create an aliased <code>GIT_OBJECTS</code> table reference
      */
     public GitObjects(final Name alias) {
         this(alias, GIT_OBJECTS);
@@ -108,6 +115,30 @@ public class GitObjects extends TableImpl<GitObjectsRecord> {
 
     private GitObjects(final Name alias, final Table<GitObjectsRecord> aliased, final Field<?>[] parameters) {
         super(alias, null, aliased, parameters, "");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<Index> getIndexes() {
+        return Arrays.<Index> asList(Indexes.GIT_OBJECTS_PRIMARY);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public UniqueKey<GitObjectsRecord> getPrimaryKey() {
+        return Keys.KEY_GIT_OBJECTS_PRIMARY;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<UniqueKey<GitObjectsRecord>> getKeys() {
+        return Arrays.<UniqueKey<GitObjectsRecord>> asList(Keys.KEY_GIT_OBJECTS_PRIMARY);
     }
 
     /**

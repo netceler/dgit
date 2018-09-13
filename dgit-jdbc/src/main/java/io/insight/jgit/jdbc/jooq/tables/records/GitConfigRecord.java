@@ -24,28 +24,28 @@ public class GitConfigRecord extends UpdatableRecordImpl<GitConfigRecord> implem
     private static final long serialVersionUID = -1507408226;
 
     /**
-     * Setter for <code>test.git_config.repo</code>.
+     * Setter for <code>GIT_CONFIG.REPO</code>.
      */
     public void setRepo(final String value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>test.git_config.repo</code>.
+     * Getter for <code>GIT_CONFIG.REPO</code>.
      */
     public String getRepo() {
         return (String) get(0);
     }
 
     /**
-     * Setter for <code>test.git_config.config</code>.
+     * Setter for <code>GIT_CONFIG.CONFIG</code>.
      */
     public void setConfig(final String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>test.git_config.config</code>.
+     * Getter for <code>GIT_CONFIG.CONFIG</code>.
      */
     public String getConfig() {
         return (String) get(1);

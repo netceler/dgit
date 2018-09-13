@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.Collection;
 
 import io.insight.jgit.KVRef;
+import io.insight.jgit.jdbc.jooq.tables.GitRefs;
 import io.insight.jgit.jdbc.jooq.tables.records.GitRefsRecord;
 import io.insight.jgit.services.KVRefService;
 
@@ -69,7 +70,7 @@ public class JdbcRefService implements KVRefService {
             if (compare(old, rec)) {
                 final boolean insert = rec == null;
                 if (rec == null) {
-                    rec = DSL.using(configuration).newRecord(GIT_REFS);
+                    rec = DSL.using(configuration).newRecord(GitRefs.GIT_REFS);
                 }
                 rec.setName(nw.getName());
                 rec.setRepo(repositoryName);

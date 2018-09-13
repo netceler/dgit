@@ -9,8 +9,10 @@ import org.jooq.impl.Internal;
 import javax.annotation.Generated;
 
 import io.insight.jgit.jdbc.jooq.tables.GitConfig;
+import io.insight.jgit.jdbc.jooq.tables.GitObjects;
 import io.insight.jgit.jdbc.jooq.tables.GitRefs;
 import io.insight.jgit.jdbc.jooq.tables.records.GitConfigRecord;
+import io.insight.jgit.jdbc.jooq.tables.records.GitObjectsRecord;
 import io.insight.jgit.jdbc.jooq.tables.records.GitRefsRecord;
 
 /**
@@ -34,6 +36,8 @@ public class Keys {
 
     public static final UniqueKey<GitRefsRecord> KEY_GIT_REFS_PRIMARY = UniqueKeys0.KEY_GIT_REFS_PRIMARY;
 
+    public static final UniqueKey<GitObjectsRecord> KEY_GIT_OBJECTS_PRIMARY = UniqueKeys0.KEY_GIT_OBJECTS_PRIMARY;
+
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
@@ -48,5 +52,9 @@ public class Keys {
 
         public static final UniqueKey<GitRefsRecord> KEY_GIT_REFS_PRIMARY = Internal.createUniqueKey(
                 GitRefs.GIT_REFS, "KEY_git_refs_PRIMARY", GitRefs.GIT_REFS.REPO, GitRefs.GIT_REFS.NAME);
+
+        public static final UniqueKey<GitObjectsRecord> KEY_GIT_OBJECTS_PRIMARY = Internal.createUniqueKey(
+                GitObjects.GIT_OBJECTS, "KEY_git_objects_PRIMARY", GitObjects.GIT_OBJECTS.REPO,
+                GitObjects.GIT_OBJECTS.OBJECT_ID);
     }
 }

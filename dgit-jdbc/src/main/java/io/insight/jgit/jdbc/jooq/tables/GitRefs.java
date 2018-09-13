@@ -32,7 +32,7 @@ public class GitRefs extends TableImpl<GitRefsRecord> {
     private static final long serialVersionUID = 359994652;
 
     /**
-     * The reference instance of <code>test.git_refs</code>
+     * The reference instance of <code>GIT_REFS</code>
      */
     public static final GitRefs GIT_REFS = new GitRefs();
 
@@ -45,61 +45,61 @@ public class GitRefs extends TableImpl<GitRefsRecord> {
     }
 
     /**
-     * The column <code>test.git_refs.repo</code>.
+     * The column <code>GIT_REFS.REPO</code>.
      */
-    public final TableField<GitRefsRecord, String> REPO = createField("repo",
+    public final TableField<GitRefsRecord, String> REPO = createField("REPO",
             org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false).defaultValue(
                     org.jooq.impl.DSL.inline("", org.jooq.impl.SQLDataType.VARCHAR)),
             this, "");
 
     /**
-     * The column <code>test.git_refs.name</code>.
+     * The column <code>GIT_REFS.NAME</code>.
      */
-    public final TableField<GitRefsRecord, String> NAME = createField("name",
+    public final TableField<GitRefsRecord, String> NAME = createField("NAME",
             org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false).defaultValue(
                     org.jooq.impl.DSL.inline("", org.jooq.impl.SQLDataType.VARCHAR)),
             this, "");
 
     /**
-     * The column <code>test.git_refs.symbolic</code>.
+     * The column <code>GIT_REFS.SYMBOLIC</code>.
      */
-    public final TableField<GitRefsRecord, Byte> SYMBOLIC = createField("symbolic",
+    public final TableField<GitRefsRecord, Byte> SYMBOLIC = createField("SYMBOLIC",
             org.jooq.impl.SQLDataType.TINYINT, this, "");
 
     /**
-     * The column <code>test.git_refs.target</code>.
+     * The column <code>GIT_REFS.TARGET</code>.
      */
-    public final TableField<GitRefsRecord, String> TARGET = createField("target",
+    public final TableField<GitRefsRecord, String> TARGET = createField("TARGET",
             org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
 
     /**
-     * The column <code>test.git_refs.storage</code>.
+     * The column <code>GIT_REFS.STORAGE</code>.
      */
-    public final TableField<GitRefsRecord, String> STORAGE = createField("storage",
+    public final TableField<GitRefsRecord, String> STORAGE = createField("STORAGE",
             org.jooq.impl.SQLDataType.VARCHAR(16), this, "");
 
     /**
-     * The column <code>test.git_refs.object_id</code>.
+     * The column <code>GIT_REFS.OBJECT_ID</code>.
      */
-    public final TableField<GitRefsRecord, String> OBJECT_ID = createField("object_id",
+    public final TableField<GitRefsRecord, String> OBJECT_ID = createField("OBJECT_ID",
             org.jooq.impl.SQLDataType.CHAR(40), this, "");
 
     /**
-     * Create a <code>test.git_refs</code> table reference
+     * Create a <code>GIT_REFS</code> table reference
      */
     public GitRefs() {
-        this(DSL.name("git_refs"), null);
+        this(DSL.name("GIT_REFS"), null);
     }
 
     /**
-     * Create an aliased <code>test.git_refs</code> table reference
+     * Create an aliased <code>GIT_REFS</code> table reference
      */
     public GitRefs(final String alias) {
         this(DSL.name(alias), GIT_REFS);
     }
 
     /**
-     * Create an aliased <code>test.git_refs</code> table reference
+     * Create an aliased <code>GIT_REFS</code> table reference
      */
     public GitRefs(final Name alias) {
         this(alias, GIT_REFS);

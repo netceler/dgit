@@ -18,17 +18,17 @@ import io.insight.jgit.jdbc.jooq.tables.GitRefs;
 public class Tables {
 
     /**
-     * The table <code>test.git_config</code>.
+     * The table <code>git_config</code>.
      */
     public static final GitConfig GIT_CONFIG = io.insight.jgit.jdbc.jooq.tables.GitConfig.GIT_CONFIG;
 
     /**
-     * The table <code>test.git_objects</code>.
+     * The table <code>git_objects</code>.
      */
     public static final GitObjects GIT_OBJECTS = io.insight.jgit.jdbc.jooq.tables.GitObjects.GIT_OBJECTS;
 
     /**
-     * The table <code>test.git_refs</code>.
+     * The table <code>git_refs</code>.
      */
     public static final GitRefs GIT_REFS = io.insight.jgit.jdbc.jooq.tables.GitRefs.GIT_REFS;
 }
