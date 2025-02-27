@@ -4,6 +4,7 @@ import org.eclipse.jgit.attributes.AttributesNode;
 import org.eclipse.jgit.attributes.AttributesNodeProvider;
 import org.eclipse.jgit.attributes.AttributesRule;
 import org.eclipse.jgit.errors.ConfigInvalidException;
+import org.eclipse.jgit.events.IndexChangedEvent;
 import org.eclipse.jgit.internal.JGitText;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectDatabase;
@@ -103,7 +104,8 @@ public class KVRepository extends Repository {
     }
 
     @Override
-    public void notifyIndexChanged() {
+    public void notifyIndexChanged(final boolean internal) {
+        this.fireEvent(new IndexChangedEvent(internal));
     }
 
     @Override
