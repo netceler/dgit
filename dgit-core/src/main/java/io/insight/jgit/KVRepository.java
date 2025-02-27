@@ -51,6 +51,11 @@ public class KVRepository extends Repository {
         }
     }
 
+    @Override
+    public String getIdentifier() {
+        return getRepositoryName();
+    }
+
     private boolean exists() throws IOException {
         return manager.exists(getRepositoryName());
     }
