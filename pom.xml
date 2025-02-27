@@ -10,7 +10,7 @@
 
     <groupId>io.insight.git</groupId>
     <artifactId>dgit</artifactId>
-    <version>1.3-SNAPSHOT</version>
+    <version>1.3</version>
     <packaging>pom</packaging>
 
     <licenses>
