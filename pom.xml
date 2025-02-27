@@ -6,7 +6,7 @@
     <groupId>io.insight.git</groupId>
     <artifactId>dgit</artifactId>
     <packaging>pom</packaging>
-    <version>1.1</version>
+    <version>1.2-SNAPSHOT</version>
     
     <modules>
         <module>dgit-core</module>
