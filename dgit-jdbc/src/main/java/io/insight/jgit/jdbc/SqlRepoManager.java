@@ -12,7 +12,7 @@ import javax.sql.DataSource;
 
 public class SqlRepoManager extends JdbcRepoManager {
 
-    private final DataSource ds;
+    private final HikariDataSource ds;
 
     public JdbcAdapter jdbcAdapter;
 
@@ -32,6 +32,10 @@ public class SqlRepoManager extends JdbcRepoManager {
         if (jdbcUrl.contains("mysql")) {
             jdbcAdapter = new MysqlJdbcAdapter();
         }
+    }
+
+    public void close() {
+        ds.close();
     }
 
     @Override

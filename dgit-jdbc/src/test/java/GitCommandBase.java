@@ -1,7 +1,4 @@
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
+import io.insight.jgit.jdbc.SqlRepoManager;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.RemoteAddCommand;
@@ -19,9 +16,13 @@ import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.treewalk.TreeWalk;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.JdbcDatabaseContainer;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,23 +31,25 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 
-import io.insight.jgit.jdbc.SqlRepoManager;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class GitCommandTest {
-    private SqlRepoManager repoManager;
+abstract class GitCommandBase {
+    private static final Logger log = LoggerFactory.getLogger(GitCommandBase.class);
 
-    File baseDir = new File("/tmp");
 
+    @TempDir
+    File baseDir;
     String repoName = "test";
-
+    private SqlRepoManager repoManager;
     private Repository repo;
 
     private Daemon gitDeamon;
 
-    @Before
-    public void setUp() throws Exception {
+    abstract JdbcDatabaseContainer container();
 
-        repoManager = new SqlRepoManager("jdbc:mysql://localhost:3306/test", "root", "lambdalab-dev");
+    @BeforeEach
+    void setUp() throws Exception {
+        repoManager = new SqlRepoManager(container().getJdbcUrl(), container().getUsername(), container().getPassword());
         if (repoManager.exists(repoName)) {
             repoManager.delete(repoName);
         }
@@ -58,23 +61,23 @@ public class GitCommandTest {
         gitDeamon.start();
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() throws Exception {
         repo.close();
         // repoManager.delete(repoName);
         gitDeamon.stop();
     }
 
     @Test
-    public void testCreateAndExists() throws IOException {
+    void createAndExists() throws IOException {
         repoManager.open(repoName);
-        assertTrue("repo should exists now", repoManager.exists(repoName));
+        assertThat(repoManager.exists(repoName)).as("repo should exists now").isTrue();
         repoManager.delete(repoName);
-        assertFalse("repo should not exists", repoManager.exists(repoName));
+        assertThat(repoManager.exists(repoName)).as("repo should not exists").isFalse();
     }
 
     @Test
-    public void fetchFromRemote() throws URISyntaxException, GitAPIException, IOException {
+    void fetchFromRemote() throws URISyntaxException, GitAPIException, IOException {
 
         final Git git = Git.wrap(repo);
         final RemoteAddCommand remoteAddCommand = git.remoteAdd();
@@ -84,25 +87,25 @@ public class GitCommandTest {
         final String ref = Constants.R_HEADS + Constants.MASTER;
         final RefSpec refSpec = new RefSpec().setForceUpdate(true).setSourceDestination(ref, ref);
         final FetchResult result = git.fetch().setRemote("origin").setRefSpecs(refSpec).call();
-        assertTrue(result.getAdvertisedRefs().size() > 0);
+        assertThat(result.getAdvertisedRefs().size() > 0).isTrue();
         assertFileContent(repo, ref, "pom.xml", "dgit");
     }
 
     private void assertFileContent(final Repository repository, final String ref, final String path,
-            final String expect) throws IOException {
+                                   final String expect) throws IOException {
         final Ref head = repository.exactRef(ref);
-        try (RevWalk walk = new RevWalk(this.repo)) {
+        try (final RevWalk walk = new RevWalk(this.repo)) {
             final RevCommit commit = walk.parseCommit(head.getObjectId());
             final RevTree tree = walk.parseTree(commit.getTree().getId());
             final TreeWalk treeWalk = TreeWalk.forPath(this.repo, path, tree);
             final byte[] bytes = this.repo.open(treeWalk.getObjectId(0)).getBytes();
             final String content = new String(bytes);
-            assertTrue(content.contains(expect));
+            assertThat(content.contains(expect)).isTrue();
         }
     }
 
     @Test
-    public void cloneFromDaemon() throws URISyntaxException, GitAPIException, IOException {
+    void cloneFromDaemon() throws URISyntaxException, GitAPIException, IOException {
         Git git = Git.wrap(repo);
         final RemoteAddCommand remoteAddCommand = git.remoteAdd();
         remoteAddCommand.setName("origin");
@@ -111,7 +114,7 @@ public class GitCommandTest {
         final String ref = Constants.R_HEADS + Constants.MASTER;
         final RefSpec refSpec = new RefSpec().setForceUpdate(true).setSourceDestination(ref, ref);
         final FetchResult result = git.fetch().setRemote("origin").setRefSpecs(refSpec).call();
-        assertTrue(result.getAdvertisedRefs().size() > 0);
+        assertThat(result.getAdvertisedRefs().size() > 0).isTrue();
 
         final File cloneTo = new File(baseDir, "cloned");
         final CloneCommand cmd = Git.cloneRepository().setDirectory(cloneTo).setURI(
@@ -121,7 +124,7 @@ public class GitCommandTest {
     }
 
     @Test
-    public void push() throws GitAPIException, URISyntaxException, IOException {
+    void push() throws GitAPIException, URISyntaxException, IOException {
         final String url = "https://github.com/lambdalab/test-repo.git";
         final File tempDir = Files.createTempDirectory("test").toFile();
         tempDir.delete();
@@ -135,14 +138,14 @@ public class GitCommandTest {
         final Iterable<PushResult> result = git.push().add("master").setRemote("a").setForce(true).call();
         for (final PushResult r : result) {
             for (final RemoteRefUpdate update : r.getRemoteUpdates()) {
-                assertEquals(RemoteRefUpdate.Status.OK, update.getStatus());
+                assertThat(update.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
             }
         }
         repo = repoManager.open(repoName);
 
         final Ref head = repo.exactRef("refs/heads/master");
         final ArrayList<String> files = new ArrayList<>();
-        try (RevWalk walk = new RevWalk(repo)) {
+        try (final RevWalk walk = new RevWalk(repo)) {
             final RevCommit commit = walk.parseCommit(head.getObjectId());
             final RevTree tree = walk.parseTree(commit.getTree().getId());
             final TreeWalk treeWalk = new TreeWalk(repo);

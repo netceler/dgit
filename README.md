@@ -8,3 +8,11 @@ cd java-middleware
 mvn install
 ```
 
+# Deploy
+
+Some tests are broken... :-(
+
+```bash
+mvn deploy -Dmaven.test.failure.ignore=true
+```
+

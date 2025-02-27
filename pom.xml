@@ -24,25 +24,69 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <jgit.version>4.10.0.201712302008-r</jgit.version>
+<!--        configmanager-->
+<!--        <jgit.version>5.13.3.202401111512-r</jgit.version>-->
+<!--        last-->
+        <!--        <jgit.version>5.1.0.201809111528-r</jgit.version>-->
     </properties>
-    
-    <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jgit</groupId>
-            <artifactId>org.eclipse.jgit.junit</artifactId>
-            <version>4.10.0.201712302008-r</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-    
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>1.20.5</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-bom</artifactId>
+                <version>3.27.3</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>5.12.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jgit</groupId>
+                <artifactId>org.eclipse.jgit.junit</artifactId>
+                <version>${jgit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.jgit</groupId>
+                <artifactId>org.eclipse.jgit</artifactId>
+                <version>${jgit.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.openrewrite.maven</groupId>
+                <artifactId>rewrite-maven-plugin</artifactId>
+                <version>6.2.0</version>
+                <configuration>
+                    <activeRecipes>
+                        <recipe>org.openrewrite.java.testing.junit5.JUnit5BestPractices</recipe>
+                        <recipe>org.openrewrite.java.testing.assertj.JUnitToAssertj</recipe>
+                    </activeRecipes>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.openrewrite.recipe</groupId>
+                        <artifactId>rewrite-testing-frameworks</artifactId>
+                        <version>3.3.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -54,45 +98,47 @@
                 </configuration>
             </plugin>
             <plugin>
-  <groupId>org.apache.maven.plugins</groupId>
-  <artifactId>maven-source-plugin</artifactId>
-  <version>3.0.1</version>
-  <executions>
-    <execution>
-      <id>attach-sources</id>
-      <goals>
-        <goal>jar</goal>
-      </goals>
-    </execution>
-  </executions>
-</plugin>
-<plugin>
-  <groupId>org.apache.maven.plugins</groupId>
-  <artifactId>maven-javadoc-plugin</artifactId>
-  <version>3.0.1</version>
-  <executions>
-    <execution>
-      <id>attach-javadocs</id>
-      <goals>
-        <goal>jar</goal>
-      </goals>
-    </execution>
-  </executions>
-</plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
-    
-    <distributionManagement>
-                <repository>
-                    <id>3rdpartydeploy-internal</id>
-                    <name>clouddeploy :: Internal Repository</name>
-                    <url>https://maven.netceler.com/content/repositories/thirdparty/</url>
-                </repository>
 
-                <snapshotRepository>
-                    <id>3rdpartydeploy-snapshots</id>
-                    <name>clouddeploy :: Snapshot Repository</name>
-                    <url>https://maven.netceler.com/content/repositories/thirdparty_snapshots/</url>
-                </snapshotRepository>
-            </distributionManagement>
+    <distributionManagement>
+        <repository>
+            <id>3rdpartydeploy-internal</id>
+            <name>clouddeploy :: Internal Repository</name>
+            <url>https://maven.netceler.com/content/repositories/thirdparty/</url>
+        </repository>
+
+        <snapshotRepository>
+            <id>3rdpartydeploy-snapshots</id>
+            <name>clouddeploy :: Snapshot Repository</name>
+            <url>https://maven.netceler.com/content/repositories/thirdparty_snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+
 </project>

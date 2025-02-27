@@ -6,12 +6,9 @@
         </encoder>
     </appender>
 
-    <logger name="io.insight.jgit" level="DEBUG" additivity="false">
-        <appender-ref ref="STDOUT" />
-    </logger>
-
-    <root level="DEBUG">
-        <appender-ref ref="STDOUT" />
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
     </root>
-
+    <logger name="io.insight.jgit" level="INFO"/>
+    <logger name="com.github.dockerjava" level="INFO"/>
 </configuration>
